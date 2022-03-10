@@ -3,6 +3,7 @@
 #define fieldWidth 10
 #define fieldHeight 16
 #include <utility>
+#include <string>
 typedef std::pair<double, double> coords;
 enum blockType {
     l = 1,
@@ -28,6 +29,9 @@ public:
     void drawEmpty(int x, int y, int w=1, int h=1);
     void clear();
     void resize();
+    int getWidth();
+    void move(int x, int y);
+    void print(std::string s);
 };
 class keyboard {
     bool pressed;
@@ -57,30 +61,38 @@ class block {
     tile tileB;
     tile tileC;
     short int rotation;
+    
 public:
     void set(int x, int y, blockType s);
     void move(int x, int y);
     void rotate(bool clockWise);
     void draw(display disp);
     std::pair<int, int>* getTileCoords();
+    blockType getShape();
+    int getY();
 };
 class engine {
-    int level;
+    int level=1;
     int score;
+    bool fallenUpdate=false;
     int field[fieldHeight][fieldWidth];
     block activePiece;
     int scanLine(int y);
     bool collisionCheck();
+    void petrify();
+    void clearLine(int y);
+    void scanLines();
 public:
     void clearField();
     void setField(const int x, const int y, const int val);
     void drawField(display disp);
-    void clearLine(int y);
-    void scanLines();
     void spawn(const blockType s);
+    int getScore();
     void left();
     void right();
-    void down();
+    void gravity();
+    void softdrop();
+    void harddrop();
     void rotateL();
     void rotateR();
     void drawPiece(display o);

@@ -72,6 +72,16 @@ void display::clear()
 {
     ::clear();
 }
+void display::move(int x, int y)
+{
+    ::move(y, x);
+}
+
+void display::print(std::string s)
+{
+    printw(s.c_str());
+}
+
 /**
  * Funkcja sprawdza wymiary wyświetlacza i zapisuje je do zmiennych width i height obiektu
  */
@@ -125,29 +135,68 @@ void display::drawEmpty(int x, int y, int w, int h)
         }
     }
 }
+
+int display::getWidth()
+{
+    return width;
+}
+
+
+
+int engine::getScore()
+{
+    return score;
+}
+
+
 /** 
  * Funkcja przesuwa aktywny blok w lewo o 1 jednostkę
  */
 void engine::left()
 {
-    activePiece.move(-1, 0);
-    if(collisionCheck())activePiece.move(1, 0);
+    if(activePiece.getY()>=0){
+        activePiece.move(-1, 0);
+        if(collisionCheck())activePiece.move(1, 0);
+    }
 }
 /**
  * Funkcja przesuwa aktywny blok w prawo o 1 jednostkę
  */
 void engine::right()
 {
+    if(activePiece.getY()>=0){
     activePiece.move(1, 0);
     if(collisionCheck())activePiece.move(-1, 0);
+    }
+}
+/**
+ * Funkcja przesuwa aktywny blok w dół o 1 jednostkę.
+ * Jeżeli natrafi na przeszkodę - petryfikuje blok
+ */
+void engine::gravity()
+{
+    activePiece.move(0, 1);
+    if(collisionCheck()){
+        activePiece.move(0, -1);
+        petrify();
+    }
 }
 /**
  * Funkcja przesuwa aktywny blok w dół o 1 jednostkę
  */
-void engine::down()
+void engine::softdrop()
 {
     activePiece.move(0, 1);
     if(collisionCheck())activePiece.move(0, -1);
+}
+void engine::harddrop()
+{
+    while(!collisionCheck()){
+        activePiece.move(0, 1);
+    }
+    activePiece.move(0, -1);
+    petrify();
+        
 }
 /**
  * Funkcja obraca aktywny blok w kierunku przeciwnym do ruchu wskazówek zegara
@@ -165,6 +214,36 @@ void engine::rotateR()
     activePiece.rotate(1);
     if(collisionCheck())activePiece.rotate(0);
 }
+void engine::reset()
+{
+    clearField();
+}
+
+void engine::petrify()
+{
+    std::pair<int, int> *t;
+    t = activePiece.getTileCoords();
+    for(int i = 0; i<4; i++){
+        std::pair<int, int> p = *(t+i);
+        if(p.second<0)reset();
+        field[p.second][p.first] = activePiece.getShape();
+    }
+    scanLines();
+    activePiece.move(0, -fieldHeight);
+    fallenUpdate = true;
+}
+
+
+bool engine::fallen()
+{
+    if(fallenUpdate){
+        fallenUpdate=false;
+        return true;
+    }else
+        return false;
+   
+}
+
 /**
  * Funkcja rysuje aktywny blok
  * @param o obiekt wyświetlacza na którym ma być narysowany blok
@@ -222,13 +301,14 @@ void engine::drawField(display disp)
  */
 void engine::scanLines(){
     int n = 0;
-    for(int y = fieldHeight; y>0; y--){
+    for(int y = fieldHeight-1; y>0; y--){
         while(scanLine(y)){//line is full
             clearLine(y);
             n++;
-            score += level*n;
         }
     }
+    score += level*n;
+    
 }
 /** 
  * Funckcja zwraca iloczyn kolejnych komórek podanego wiersza tablicy
@@ -237,11 +317,11 @@ void engine::scanLines(){
  */
 int engine::scanLine(int y)
 {
-    int line;
+    
     for(int x = 0; x<fieldWidth; x++){
-        line = line*field[y][x];
+        if(!field[y][x])return 0;
     }
-    return line;
+    return 1;
 }
 /** 
  * Funkcja kasuje wiersz w tablicy i przesuwa wszystkie wyższe wiersze o 1 w dół
@@ -285,6 +365,23 @@ std::pair<int, int> * block::getTileCoords()
     a[3]= {center.first+tileD.x, center.second+tileD.y};//tileD
     return a;
 }
+
+int block::getY()
+{
+    return (int)center.second;
+}
+
+
+
+/**
+ * Funckja zwraca kształt bloku
+ * @return typ bloku
+ */
+blockType block::getShape()
+{
+    return shape;
+}
+
 
 /**
  * Funkcja rysuje blok na podany wyświetlacz
