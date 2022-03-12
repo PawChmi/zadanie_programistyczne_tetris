@@ -1,11 +1,16 @@
 #ifndef TETRIS_H
 #define TETRIS_H
-#define fieldWidth 10
-#define fieldHeight 16
+#define DEFAULT_TIME_ADDED 100
 #include <utility>
 #include <string>
+#include <queue>
+#include <vector>
+#include <algorithm>
+#include <random>
+#include "consoles/console_u8.h"
 typedef std::pair<double, double> coords;
 enum blockType {
+    n = 0,
     l = 1,
     j = 2,
     s = 3,
@@ -21,40 +26,9 @@ public:
     void swap();
     void negateX();
 };
-class display {
-    int height;
-    int width;
-public:
-    void drawTile(int x, int y, int color);
-    void drawEmpty(int x, int y, int w=1, int h=1);
-    void clear();
-    void resize();
-    int getWidth();
-    void move(int x, int y);
-    void print(std::string s);
-};
-class keyboard {
-    bool pressed;
-    int lastInput=0;
-public:
-    int getInput();
-    void setTimeout(int delay);
-};
 
-class console {
-
-
-
-public:
-    keyboard in;
-    display out;
-    console();
-
-    void close();
-};
 class block {
     blockType shape;
-    double offset = 1;
     coords center;
     tile tileD;
     tile tileA;
@@ -73,29 +47,45 @@ public:
 };
 class engine {
     int level=1;
-    int score;
+    int score=0;
+    int clock=0;
+    int goal = 0;
+    std::queue<blockType> blockQ;
     bool fallenUpdate=false;
+    blockType holder=n;
+    blockType next=n;
+    bool held=false;
     int field[fieldHeight][fieldWidth];
     block activePiece;
+    block nextPiece;
+    block ghostPiece;
+    block holdPiece;
+    
     int scanLine(int y);
     bool collisionCheck();
     void petrify();
     void clearLine(int y);
     void scanLines();
-public:
+    void shuffle();
+    void scoreIncrease(int n);
     void clearField();
     void setField(const int x, const int y, const int val);
+    void gravity();
+public:
     void drawField(display disp);
     void spawn(const blockType s);
+    void spawn();
     int getScore();
     void left();
     void right();
-    void gravity();
+    void incrementClock(int ammount=DEFAULT_TIME_ADDED);
     void softdrop();
     void harddrop();
     void rotateL();
     void rotateR();
+    void hold();
     void drawPiece(display o);
+    void drawSide(display o);
     void reset();
     bool fallen();
     engine();

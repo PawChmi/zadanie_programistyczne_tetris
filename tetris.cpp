@@ -1,6 +1,4 @@
-
 #include "tetris.h"
-#include <curses.h>
 #include <algorithm>
 #include <iterator>
 
@@ -34,111 +32,7 @@ void tile::negateX(){
  */
 engine::engine()
 {
-    clearField();
-}
-
-console::console() 
-{
-    ::initscr();
-    ::noecho();
-    ::cbreak();
-    ::curs_set(0);
-    if(!has_colors()) {
-        ::endwin();
-    }
-    out.resize();
-    out.clear();
-    ::start_color();
-    ::init_pair(1, COLOR_BLUE, COLOR_BLACK);    //l
-    ::init_pair(2, COLOR_YELLOW, COLOR_BLACK);   //j
-    ::init_pair(3, COLOR_GREEN, COLOR_BLACK);//s
-    ::init_pair(4, COLOR_RED, COLOR_BLACK);  //z
-    ::init_pair(5, COLOR_MAGENTA, COLOR_BLACK);   //t
-    ::init_pair(6, COLOR_CYAN, COLOR_BLACK); //i
-    ::init_pair(7, COLOR_WHITE, COLOR_BLACK);  //o
-}
-/**
- * Funkcja odpowiedzialna za zamykanie konsoli
- * (zastąpić destruktorem)
- */
-void console::close()
-{
-    ::endwin();
-}
-/**
- * Funkcja czyści wyświetlany ekran
- */
-void display::clear()
-{
-    ::clear();
-}
-void display::move(int x, int y)
-{
-    ::move(y, x);
-}
-
-void display::print(std::string s)
-{
-    printw(s.c_str());
-}
-
-/**
- * Funkcja sprawdza wymiary wyświetlacza i zapisuje je do zmiennych width i height obiektu
- */
-void display::resize()
-{
-    getmaxyx(stdscr, height, width);
-}
-/**
- * Funkcja ustawia czas oczekiwania na wciśnięcie klawisza
- * @param delay czas w milisekundach
- */
-void keyboard::setTimeout(int delay)
-{
-    ::timeout(delay);
-}
-/**
- * Funkcja zwraca klawisz wciśnięty przez użytkownika
- * @return wartość ascii znaku z klawiatury. -1 gdy minął czas oczekiwania.
- */
-int keyboard::getInput()
-{
-    return getch();
-}
-/**
- * Funkcja rysuje kafelek na podanych współrzędnych i w podanym kolorze
- * @param x współrzędna x w polu gry
- * @param y współrzędna y w polu gry
- * @param color wartość od 1-7 oznaczająca kolor kafelka
- */
-void display::drawTile(int x, int y, int color)
-{
-    attron(COLOR_PAIR(color));
-    attron(A_REVERSE);
-    mvprintw(y, x*2+(width/2)-(fieldWidth), "  ");
-    attroff(A_REVERSE);
-    
-}
-/**
- * Funkcja rysuje prostokąt pustej przestrzeni na podanych współrzędnych o podanych wymiarach
- * @param x wpółrzędna x
- * @param y współrzędna y
- * @param w szerokość prostokąta
- * @param h wysokość prostokąta
- */
-void display::drawEmpty(int x, int y, int w, int h)
-{
-    attron(COLOR_PAIR(7));
-    for(int i = 0; i < h;i++){
-        for(int j = 0; j < w; j++){
-            mvprintw(y+i, (x+j)*2+(width/2)-(fieldWidth), "..");
-        }
-    }
-}
-
-int display::getWidth()
-{
-    return width;
+    reset();
 }
 
 
@@ -148,26 +42,37 @@ int engine::getScore()
     return score;
 }
 
+void engine::incrementClock(int ammount)
+{
+    clock += ammount;
+    if(clock >= (20-level)*25){
+        gravity();
+        clock = 0;
+    }
+}
+
+
 
 /** 
  * Funkcja przesuwa aktywny blok w lewo o 1 jednostkę
  */
 void engine::left()
 {
-    if(activePiece.getY()>=0){
-        activePiece.move(-1, 0);
-        if(collisionCheck())activePiece.move(1, 0);
-    }
+
+    activePiece.move(-1, 0);
+    if(collisionCheck())activePiece.move(1, 0);
+
+    incrementClock();
 }
 /**
  * Funkcja przesuwa aktywny blok w prawo o 1 jednostkę
  */
 void engine::right()
 {
-    if(activePiece.getY()>=0){
+    
     activePiece.move(1, 0);
     if(collisionCheck())activePiece.move(-1, 0);
-    }
+    incrementClock();
 }
 /**
  * Funkcja przesuwa aktywny blok w dół o 1 jednostkę.
@@ -188,6 +93,7 @@ void engine::softdrop()
 {
     activePiece.move(0, 1);
     if(collisionCheck())activePiece.move(0, -1);
+    incrementClock(DEFAULT_TIME_ADDED/4);
 }
 void engine::harddrop()
 {
@@ -204,7 +110,20 @@ void engine::harddrop()
 void engine::rotateL()
 {
     activePiece.rotate(0);
-    if(collisionCheck())activePiece.rotate(1);
+    if(collisionCheck()){
+        activePiece.rotate(1);
+        left();
+        activePiece.rotate(0);
+        if(collisionCheck()){
+            activePiece.rotate(1);
+            right();
+            activePiece.rotate(0);
+            if(collisionCheck()){
+                activePiece.rotate(1);
+            }
+        }
+    }
+    incrementClock(DEFAULT_TIME_ADDED/4);
 }
 /**
  * Funkcja obraca aktywny blok w kierunku zgodnym z ruchem wskazówek zegara
@@ -212,11 +131,33 @@ void engine::rotateL()
 void engine::rotateR()
 {
     activePiece.rotate(1);
-    if(collisionCheck())activePiece.rotate(0);
+    if(collisionCheck()){
+        activePiece.rotate(0);
+        right();
+        activePiece.rotate(1);
+        if(collisionCheck()){
+            activePiece.rotate(0);
+            left();
+            activePiece.rotate(1);
+            if(collisionCheck()){
+                activePiece.rotate(0);
+            }
+        }
+    }
+    incrementClock(DEFAULT_TIME_ADDED/4);
 }
 void engine::reset()
 {
     clearField();
+    std::queue<blockType> empty;
+    std::swap(blockQ, empty);
+    shuffle();
+    spawn();
+    level = 0;
+    goal = 10;
+    holder = n;
+    held = false;
+    
 }
 
 void engine::petrify()
@@ -225,12 +166,13 @@ void engine::petrify()
     t = activePiece.getTileCoords();
     for(int i = 0; i<4; i++){
         std::pair<int, int> p = *(t+i);
-        if(p.second<0)reset();
-        field[p.second][p.first] = activePiece.getShape();
+        if(p.second<=0)reset();
+        else field[p.second][p.first] = activePiece.getShape();
     }
     scanLines();
     activePiece.move(0, -fieldHeight);
     fallenUpdate = true;
+    held = false;
 }
 
 
@@ -251,6 +193,73 @@ bool engine::fallen()
 void engine::drawPiece(display o){
     activePiece.draw(o);
 }
+
+void engine::drawSide(display o)
+{
+    o.clear(fieldWidth+1, 1, 6, fieldHeight);
+    o.move((o.getWidth()/2)+fieldWidth+2, 1);
+    o.print("Level:"+std::to_string(level));
+    o.move((o.getWidth()/2)+fieldWidth+2, 2);
+    o.print("To LvlUp:"+std::to_string(goal));
+    o.move((o.getWidth()/2)+fieldWidth+2, 3);
+    o.print("Score:"+std::to_string(score));
+    
+    o.move((o.getWidth()/2)+fieldWidth+2, 4);
+    o.print("Hold:");
+    if(holder)holdPiece.draw(o); 
+    o.move((o.getWidth()/2)+fieldWidth+2, 9);
+    o.print("Next:");
+    nextPiece.set(fieldWidth+2, 10, next);
+    nextPiece.draw(o);
+    
+}
+
+void engine::hold()
+{
+    if(!held){
+        held = true;
+        blockType temp = holder;
+        holder = activePiece.getShape();
+        holdPiece.set(fieldWidth+2, 5, holder);
+        if(temp)spawn(temp);
+        else spawn();
+    }
+}
+
+void engine::scoreIncrease(int n)
+{
+    switch(n){
+        case 1:
+           score += (level+1)*100;
+           break;
+        case 2:
+            score += (level+1)*100*3;
+            break;
+        case 3:
+            score += (level+1)*100*5;
+            break;
+        case 4:
+            score += (level+1)*100*8;
+            break;
+    }
+    goal -= n;
+    if(goal<=0){
+        level++;
+        goal = std::min(100, (level+1)*10);
+    }
+	
+}
+
+
+void engine::shuffle()
+{
+    std::vector<blockType> blocks={l,j,o,i,t,s,z};
+    std::shuffle(std::begin(blocks), std::end(blocks), std::default_random_engine( time( NULL )));
+    for(auto b : blocks){
+        blockQ.push(b);
+    }
+}
+
 /**
  * Funkcja zeruje komórki tablicy zapisującej bloki
  */
@@ -268,7 +277,16 @@ void engine::clearField()
  */
 void engine::spawn(const blockType s)
 {
-    activePiece.set((fieldWidth/2)-1,-5, s);
+    activePiece.set((fieldWidth/2)-1,-3, s);
+}
+void engine::spawn()
+{
+    activePiece.set((fieldWidth/2)-1,-3, next);
+    
+    if(!blockQ.size())shuffle();
+    next = blockQ.front();
+    blockQ.pop();
+    
 }
 /**
  * Funckcja ustawia komórkę tablicy na podaną wartość
@@ -307,7 +325,7 @@ void engine::scanLines(){
             n++;
         }
     }
-    score += level*n;
+    scoreIncrease(n);
     
 }
 /** 
@@ -345,9 +363,10 @@ bool engine::collisionCheck()
     for(int i = 0; i<4; i++){
         std::pair<int, int> p = *(t+i);
         if(p.first<0||p.first>=fieldWidth)return true;
-        else if(p.second < 0)return false;
-        else if(p.second>=fieldHeight)return true;
-        else if(field[p.second][p.first])return true;
+        if(p.second >= 0){
+            if(p.second>=fieldHeight)return true;
+            else if(field[p.second][p.first])return true;       
+        }
     }
     return false;
 }
@@ -449,8 +468,11 @@ void block::set(int x, int y, blockType sh)
     rotation = 0;
     shape = sh;
     tileD = {0,0};
-    offset = 1;
     switch(sh){
+        case n:
+            tileA= {0,0};
+            tileB= {0,0};
+            tileC= {0,0};
         case l:
             tileA = {1,0};
             tileB = {-1,0};
@@ -483,14 +505,12 @@ void block::set(int x, int y, blockType sh)
             tileC = {-0.5,0.5};
             tileD = {0.5,0.5};
             center = {x+0.5, y+0.5};
-            offset = 0.5;
             break;   
         case i:
             tileA = {0.5,0.5};
             tileB = {-0.5,0.5};
             tileC = {-1.5,0.5};
             tileD = {1.5,0.5};
-            offset = 0.5;
             center = {x+0.5, y+0.5};
             break; 
     }
