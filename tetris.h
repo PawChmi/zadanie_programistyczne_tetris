@@ -7,7 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <random>
-#include "consoles/console_u8.h"
+#include "consoles/console.h"
 typedef std::pair<double, double> coords;
 enum blockType {
     n = 0,
@@ -29,6 +29,7 @@ public:
 
 class block {
     blockType shape;
+    bool ghost = false;
     coords center;
     tile tileD;
     tile tileA;
@@ -41,28 +42,35 @@ public:
     void move(int x, int y);
     void rotate(bool clockWise);
     void draw(display disp);
+    void makeGhost();
     std::pair<int, int>* getTileCoords();
     blockType getShape();
+    int getX();
     int getY();
 };
 class engine {
     int level=1;
     int score=0;
     int clock=0;
+    int height;
+    int width; 
     int goal = 0;
+    bool end = false;
     std::queue<blockType> blockQ;
     bool fallenUpdate=false;
     blockType holder=n;
     blockType next=n;
     bool held=false;
-    int field[fieldHeight][fieldWidth];
+    int ** field;
+  //  int field[fieldHeight][fieldWidth];
+    
     block activePiece;
     block nextPiece;
     block ghostPiece;
     block holdPiece;
-    
+    console * conptr;
     int scanLine(int y);
-    bool collisionCheck();
+    bool collisionCheck(block &b);
     void petrify();
     void clearLine(int y);
     void scanLines();
@@ -71,6 +79,7 @@ class engine {
     void clearField();
     void setField(const int x, const int y, const int val);
     void gravity();
+    void ghostDrop();
 public:
     void drawField(display disp);
     void spawn(const blockType s);
@@ -88,7 +97,10 @@ public:
     void drawSide(display o);
     void reset();
     bool fallen();
-    engine();
+    bool ended();
+    void giveUp();
+    engine(console & c, int w=10, int h=20, int lvl = 1);
+    ~engine();
     
 };
 

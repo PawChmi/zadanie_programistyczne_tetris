@@ -30,16 +30,50 @@ void tile::negateX(){
 /**
  * Konstruktor obiektu konsoli. Inicjalizuje bibliotekę ncurses
  */
-engine::engine()
+engine::engine(console & c, int w, int h, int lvl)
 {
-    reset();
+    
+    conptr = &c;
+    conptr->out.setGameField(w, h);
+    std::queue<blockType> empty;
+    std::swap(blockQ, empty);
+    field = new int* [h];
+    width = w;
+    height = h;
+    for(int i = 0; i < h; ++i){
+        field[i] = new int[w];
+    }
+    clearField();
+    shuffle();
+    spawn();
+    spawn();
+    level = lvl;
+    goal = std::min(100, (level+1)*10);
+    holder = n;
+    held = false;
+}
+
+engine::~engine()
+{
+    for(int i = 0; i < engine::height; ++i){
+        delete[] field[i] ;
+    }
+    delete [] field;
 }
 
 
 
+/**
+ * Funckja zwraca wynik który gracz osiągnął w obecnej grze
+ */
 int engine::getScore()
 {
     return score;
+}
+
+void engine::giveUp()
+{
+    end = true;
 }
 
 void engine::incrementClock(int ammount)
@@ -60,8 +94,8 @@ void engine::left()
 {
 
     activePiece.move(-1, 0);
-    if(collisionCheck())activePiece.move(1, 0);
-
+    if(collisionCheck(activePiece))activePiece.move(1, 0);
+    ghostDrop();
     incrementClock();
 }
 /**
@@ -71,8 +105,10 @@ void engine::right()
 {
     
     activePiece.move(1, 0);
-    if(collisionCheck())activePiece.move(-1, 0);
+    if(collisionCheck(activePiece))activePiece.move(-1, 0);
+    ghostDrop();
     incrementClock();
+    
 }
 /**
  * Funkcja przesuwa aktywny blok w dół o 1 jednostkę.
@@ -81,7 +117,7 @@ void engine::right()
 void engine::gravity()
 {
     activePiece.move(0, 1);
-    if(collisionCheck()){
+    if(collisionCheck(activePiece)){
         activePiece.move(0, -1);
         petrify();
     }
@@ -92,16 +128,18 @@ void engine::gravity()
 void engine::softdrop()
 {
     activePiece.move(0, 1);
-    if(collisionCheck())activePiece.move(0, -1);
+    if(collisionCheck(activePiece))activePiece.move(0, -1);
     incrementClock(DEFAULT_TIME_ADDED/4);
+    
 }
 void engine::harddrop()
 {
-    while(!collisionCheck()){
+    while(!collisionCheck(activePiece)){
         activePiece.move(0, 1);
     }
     activePiece.move(0, -1);
     petrify();
+
         
 }
 /**
@@ -110,19 +148,20 @@ void engine::harddrop()
 void engine::rotateL()
 {
     activePiece.rotate(0);
-    if(collisionCheck()){
+    if(collisionCheck(activePiece)){
         activePiece.rotate(1);
         left();
         activePiece.rotate(0);
-        if(collisionCheck()){
+        if(collisionCheck(activePiece)){
             activePiece.rotate(1);
             right();
             activePiece.rotate(0);
-            if(collisionCheck()){
+            if(collisionCheck(activePiece)){
                 activePiece.rotate(1);
             }
         }
     }
+    ghostDrop();
     incrementClock(DEFAULT_TIME_ADDED/4);
 }
 /**
@@ -131,33 +170,34 @@ void engine::rotateL()
 void engine::rotateR()
 {
     activePiece.rotate(1);
-    if(collisionCheck()){
+    if(collisionCheck(activePiece)){
         activePiece.rotate(0);
         right();
         activePiece.rotate(1);
-        if(collisionCheck()){
+        if(collisionCheck(activePiece)){
             activePiece.rotate(0);
             left();
             activePiece.rotate(1);
-            if(collisionCheck()){
+            if(collisionCheck(activePiece)){
                 activePiece.rotate(0);
             }
         }
     }
+    ghostDrop();
     incrementClock(DEFAULT_TIME_ADDED/4);
 }
-void engine::reset()
+void engine::ghostDrop(){
+    ghostPiece = activePiece;
+    ghostPiece.makeGhost();
+    while(!collisionCheck(ghostPiece)){
+        ghostPiece.move(0, 1);
+    }
+    ghostPiece.move(0, -1);
+}
+
+bool engine::ended()
 {
-    clearField();
-    std::queue<blockType> empty;
-    std::swap(blockQ, empty);
-    shuffle();
-    spawn();
-    level = 0;
-    goal = 10;
-    holder = n;
-    held = false;
-    
+    return end;
 }
 
 void engine::petrify()
@@ -166,11 +206,11 @@ void engine::petrify()
     t = activePiece.getTileCoords();
     for(int i = 0; i<4; i++){
         std::pair<int, int> p = *(t+i);
-        if(p.second<=0)reset();
+        if(p.second<=0)end = true;
         else field[p.second][p.first] = activePiece.getShape();
     }
     scanLines();
-    activePiece.move(0, -fieldHeight);
+    activePiece.move(0, -height);
     fallenUpdate = true;
     held = false;
 }
@@ -191,27 +231,16 @@ bool engine::fallen()
  * @param o obiekt wyświetlacza na którym ma być narysowany blok
  */
 void engine::drawPiece(display o){
+    ghostPiece.draw(o);
     activePiece.draw(o);
 }
 
 void engine::drawSide(display o)
 {
-    o.clear(fieldWidth+1, 1, 6, fieldHeight);
-    o.move((o.getWidth()/2)+fieldWidth+2, 1);
-    o.print("Level:"+std::to_string(level));
-    o.move((o.getWidth()/2)+fieldWidth+2, 2);
-    o.print("To LvlUp:"+std::to_string(goal));
-    o.move((o.getWidth()/2)+fieldWidth+2, 3);
-    o.print("Score:"+std::to_string(score));
-    
-    o.move((o.getWidth()/2)+fieldWidth+2, 4);
-    o.print("Hold:");
+    o.printData(score, level, goal);
     if(holder)holdPiece.draw(o); 
-    o.move((o.getWidth()/2)+fieldWidth+2, 9);
-    o.print("Next:");
-    nextPiece.set(fieldWidth+2, 10, next);
+    nextPiece.set(width+2, 10, next);
     nextPiece.draw(o);
-    
 }
 
 void engine::hold()
@@ -220,7 +249,7 @@ void engine::hold()
         held = true;
         blockType temp = holder;
         holder = activePiece.getShape();
-        holdPiece.set(fieldWidth+2, 5, holder);
+        holdPiece.set(width+2, 5, holder);
         if(temp)spawn(temp);
         else spawn();
     }
@@ -253,7 +282,7 @@ void engine::scoreIncrease(int n)
 
 void engine::shuffle()
 {
-    std::vector<blockType> blocks={l,j,o,i,t,s,z};
+    std::vector<blockType> blocks={l, s,z,o,i,j,t};
     std::shuffle(std::begin(blocks), std::end(blocks), std::default_random_engine( time( NULL )));
     for(auto b : blocks){
         blockQ.push(b);
@@ -265,8 +294,8 @@ void engine::shuffle()
  */
 void engine::clearField()
 {
-    for(int y = 0; y<fieldHeight; y++){
-        for(int x = 0; x<fieldWidth; x++){
+    for(int y = 0; y<height; y++){
+        for(int x = 0; x<width; x++){
             field[y][x] = 0;
         }
     }
@@ -277,15 +306,17 @@ void engine::clearField()
  */
 void engine::spawn(const blockType s)
 {
-    activePiece.set((fieldWidth/2)-1,-3, s);
+    activePiece.set((width/2)-1,-3, s);
+    ghostDrop();
 }
 void engine::spawn()
 {
-    activePiece.set((fieldWidth/2)-1,-3, next);
+    activePiece.set((width/2)-1,-3, next);
     
     if(!blockQ.size())shuffle();
     next = blockQ.front();
     blockQ.pop();
+    ghostDrop();
     
 }
 /**
@@ -303,8 +334,8 @@ void engine::setField(const int x, const int y, const int val){
  */
 void engine::drawField(display disp)
 {
-    for(int y = 0; y<fieldHeight; y++){
-        for(int x = 0; x<fieldWidth; x++){
+    for(int y = 0; y<height; y++){
+        for(int x = 0; x<width; x++){
             if(field[y][x]){
                 disp.drawTile(x,y,field[y][x]);
             }else{
@@ -312,14 +343,14 @@ void engine::drawField(display disp)
             }
         }
     }
-    refresh();
+    
 }
 /**
  * Funkcja sprawdza kompletność kolejnych linijek w tablicy, czyści kompletne i zwiększa wynik gracza
  */
 void engine::scanLines(){
     int n = 0;
-    for(int y = fieldHeight-1; y>0; y--){
+    for(int y = height-1; y>0; y--){
         while(scanLine(y)){//line is full
             clearLine(y);
             n++;
@@ -336,7 +367,7 @@ void engine::scanLines(){
 int engine::scanLine(int y)
 {
     
-    for(int x = 0; x<fieldWidth; x++){
+    for(int x = 0; x<width; x++){
         if(!field[y][x])return 0;
     }
     return 1;
@@ -346,8 +377,17 @@ int engine::scanLine(int y)
  */
 void engine::clearLine(int y)
 {
+    drawField(conptr->out);
+    for(int x =0; x<width;x++){
+     conptr->out.drawTile(x, y, field[y][x], true);   
+    }
+    conptr->in.getInput();
+    
+    conptr->out.drawEmpty(0, y, width);
+    conptr->in.getInput();
+    
     while(y>1){//kopiuj zawartość linijki nad y do y, powtarzaj aż dojdziesz do ostatniej linijki
-        std::copy(std::begin(field[y-1]), std::end(field[y-1]), std::begin(field[y]));
+        std::copy(field[y-1], field[y-1]+width, field[y]);
         y--;
     }
         
@@ -356,15 +396,15 @@ void engine::clearLine(int y)
  * Funkcja sprawdza czy blok wyszedł poza ramy pola gry lub nachodzi na zajęte już komórki
  * @return true jeśli nastąpiła kolizja, w przeciwnym razie false
  */
-bool engine::collisionCheck()
+bool engine::collisionCheck(block &b)
 {
     std::pair<int, int> *t;
-    t = activePiece.getTileCoords();
+    t = b.getTileCoords();
     for(int i = 0; i<4; i++){
         std::pair<int, int> p = *(t+i);
-        if(p.first<0||p.first>=fieldWidth)return true;
+        if(p.first<0||p.first>=width)return true;
         if(p.second >= 0){
-            if(p.second>=fieldHeight)return true;
+            if(p.second>=height)return true;
             else if(field[p.second][p.first])return true;       
         }
     }
@@ -385,9 +425,23 @@ std::pair<int, int> * block::getTileCoords()
     return a;
 }
 
+/**
+ * Funckcja zwraca wspołrzędną Y środka bloku
+ * @return y środka bloku
+ */
+
 int block::getY()
 {
     return (int)center.second;
+}
+/**
+ * Funckcja zwraca wspołrzędną X środka bloku
+ * @return X środka bloku
+ */
+
+int block::getX()
+{
+    return (int)center.first;
 }
 
 
@@ -408,10 +462,15 @@ blockType block::getShape()
  */
 void block::draw(display disp)
 {
-    disp.drawTile(center.first+tileA.x, center.second+tileA.y, shape);//tileA
-    disp.drawTile(center.first+tileB.x, center.second+tileB.y, shape);//tileB
-    disp.drawTile(center.first+tileC.x, center.second+tileC.y, shape);//tileC
-    disp.drawTile(center.first+tileD.x, center.second+tileD.y, shape);//tileD
+    disp.drawTile(center.first+tileA.x, center.second+tileA.y, shape, ghost);//tileA
+    disp.drawTile(center.first+tileB.x, center.second+tileB.y, shape, ghost);//tileB
+    disp.drawTile(center.first+tileC.x, center.second+tileC.y, shape, ghost);//tileC
+    disp.drawTile(center.first+tileD.x, center.second+tileD.y, shape, ghost);//tileD
+}
+
+
+void block::makeGhost(){
+    ghost = true;
 }
 /**
  * Funkcja zmienia współrzędne kafelków w taki sposób, żeby blok się obrócił

@@ -1,25 +1,28 @@
 #include "tetris.h"
-#include "consoles/console_u8.h"
-#include <ncurses.h>
+#include "consoles/console.h"
 #include <cstdlib>
+#include <iostream>
 #include <ctime>
 
 
 
 int main(int argc, char* argv[]){
+
     console con;
-    engine game;
+    
+    
     //blockType blocks[7] = {s,z,t,i,o,l,j};
-    bool gameloop = true;
     
     con.in.setTimeout(100);
-    game.spawn();
-    game.drawField(con.out);
+    engine game(con, 10, 20, 2);
+    //game.spawn();
     game.drawSide(con.out);
-    while(gameloop){
+    while(!game.ended()){
+        game.drawField(con.out);
+        game.drawPiece(con.out);
         int ch = con.in.getInput();
         if(ch ==27){
-            gameloop = 0;
+            game.giveUp();
         }else if(ch=='1'){
             game.spawn(l);
         }else if(ch=='2'){
@@ -38,7 +41,7 @@ int main(int argc, char* argv[]){
             game.left();
         }else if(ch=='p'){
             bool pauseloop = true;
-            con.out.move(con.out.getWidth()/2-3, fieldHeight/2);
+            con.out.move(con.out.getWidth()/2-3, 10);
             con.out.print("PAUSED");
             while(pauseloop){
                 
@@ -64,15 +67,14 @@ int main(int argc, char* argv[]){
         }else if(ch == -1){
             game.incrementClock();
         }
-        game.drawField(con.out);
-        game.drawPiece(con.out);
+
         if(game.fallen()){
             game.spawn();
             game.drawSide(con.out);
         }
         
     }
+    std::cout << game.getScore();
     
-    con.close();
     return 0;
 }
