@@ -1,5 +1,5 @@
-#include "console_ASCII.h"
-
+#include "console.h"
+#include <curses.h>
 
 console::console() 
 {
@@ -22,13 +22,14 @@ console::console()
     ::init_pair(7, COLOR_WHITE, COLOR_BLACK);  //o
 }
 /**
- * Funkcja odpowiedzialna za zamykanie konsoli
- * (zastąpić destruktorem)
+ * Destruktor konsoli
  */
-void console::close()
+console::~console()
 {
     ::endwin();
 }
+
+
 /**
  * Funkcja czyści wyświetlany ekran
  */
@@ -45,6 +46,30 @@ void display::clear(int x, int y, int w, int h)
             mvprintw(y+i+offsetY, (x+j)*2+(width/2)-(fieldWidth)+offsetX, "  ");
         }
     }    
+}
+
+/**
+ * Funckcja wypisuje stan gry czyli wynik, poziom oraz ile linii trzeba skasować żeby wejść na wyższy poziom
+ * @param scr Wynik gracza
+ * @param lvl Poziom trudności
+ * @param goal Ile jeszcze brakuje do następnego poziomu
+ */
+
+
+void display::printData(int scr, int lvl, int goal)
+{
+    clear(fieldWidth+1, 1, 6, fieldHeight);
+    move((width/2)+fieldWidth+2, 1);
+    print("Level:"+std::to_string(lvl));
+    move((width/2)+fieldWidth+2, 2);
+    print("To LvlUp:"+std::to_string(goal));
+    move((width/2)+fieldWidth+2, 3);
+    print("Score:"+std::to_string(scr));
+    move((width/2)+fieldWidth+2, 4);
+    print("Hold:");
+    move((width/2)+fieldWidth+2, 9);
+    print("Next:");
+    
 }
 
 
@@ -89,11 +114,14 @@ int keyboard::getInput()
  * @param y współrzędna y w polu gry
  * @param color wartość od 1-7 oznaczająca kolor kafelka
  */
-void display::drawTile(int x, int y, int color)
+void display::drawTile(int x, int y, int color, bool ghost)
 {
     attron(COLOR_PAIR(color));
     attron(A_REVERSE);
-    mvprintw(y+offsetY, x*2+(width/2)-(fieldWidth)+offsetX, "  ");
+    if(!ghost)
+        mvprintw(y+offsetY, x*2+(width/2)-(fieldWidth)+offsetX, "  ");
+    else
+        mvprintw(y+offsetY, x*2+(width/2)-(fieldWidth)+offsetX, "[]");
     attroff(A_REVERSE);
     
 }
