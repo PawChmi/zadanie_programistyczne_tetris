@@ -28,7 +28,16 @@ console::~console()
 {
     ::endwin();
 }
-
+/**
+ * Funckcja ustawia w konsoli wielkość pola gry, żeby nie musiało być przekazywane za każdym razem kiedy chcemy coś wyświetlić.
+ * @param w szerokość pola gry
+ * @param h wysokość pola gry
+ */
+void display::setGameField(int w, int h)
+{
+    gameFieldWidth = w;
+    gameFieldHeight = h;
+}
 
 /**
  * Funkcja czyści wyświetlany ekran
@@ -43,7 +52,7 @@ void display::clear(int x, int y, int w, int h)
     attron(COLOR_PAIR(7));
     for(int i = 0; i < h;i++){
         for(int j = 0; j < w; j++){
-            mvprintw(y+i+offsetY, (x+j)*2+(width/2)-(fieldWidth)+offsetX, "  ");
+            mvprintw(y+i+offsetY, (x+j)*2+(width/2)-(gameFieldWidth)+offsetX, "  ");
         }
     }    
 }
@@ -58,16 +67,16 @@ void display::clear(int x, int y, int w, int h)
 
 void display::printData(int scr, int lvl, int goal)
 {
-    clear(fieldWidth+1, 1, 6, fieldHeight);
-    move((width/2)+fieldWidth+2, 1);
+    clear(gameFieldWidth+1, 1, 6, gameFieldHeight);
+    move((width/2)+gameFieldWidth+2, 1);
     print("Level:"+std::to_string(lvl));
-    move((width/2)+fieldWidth+2, 2);
+    move((width/2)+gameFieldWidth+2, 2);
     print("To LvlUp:"+std::to_string(goal));
-    move((width/2)+fieldWidth+2, 3);
+    move((width/2)+gameFieldWidth+2, 3);
     print("Score:"+std::to_string(scr));
-    move((width/2)+fieldWidth+2, 4);
+    move((width/2)+gameFieldWidth+2, 4);
     print("Hold:");
-    move((width/2)+fieldWidth+2, 9);
+    move((width/2)+gameFieldWidth+2, 9);
     print("Next:");
     
 }
@@ -119,9 +128,9 @@ void display::drawTile(int x, int y, int color, bool ghost)
     attron(COLOR_PAIR(color));
     attron(A_REVERSE);
     if(!ghost)
-        mvprintw(y+offsetY, x*2+(width/2)-(fieldWidth)+offsetX, "  ");
+        mvprintw(y+offsetY, x*2+(width/2)-(gameFieldWidth)+offsetX, "  ");
     else
-        mvprintw(y+offsetY, x*2+(width/2)-(fieldWidth)+offsetX, "[]");
+        mvprintw(y+offsetY, x*2+(width/2)-(gameFieldWidth)+offsetX, "[]");
     attroff(A_REVERSE);
     
 }
@@ -137,7 +146,7 @@ void display::drawEmpty(int x, int y, int w, int h)
     attron(COLOR_PAIR(7));
     for(int i = 0; i < h;i++){
         for(int j = 0; j < w; j++){
-            mvprintw(y+i+offsetY, (x+j)*2+(width/2)-(fieldWidth)+offsetX, "[]");
+            mvprintw(y+i+offsetY, (x+j)*2+(width/2)-(gameFieldWidth)+offsetX, "[]");
         }
     }
 }
