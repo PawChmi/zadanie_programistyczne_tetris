@@ -1,5 +1,6 @@
 #include "console.h"
-#include <curses.h>
+
+#include <iostream>
 
 
  std::istream& operator >> (std::istream& i, key& K){
@@ -24,60 +25,11 @@
 console::console() 
 {
     ::setlocale(LC_ALL, "");
-    ::initscr();
-    ::noecho();
-    ::cbreak();
-
-    ::curs_set(0);
-    if(!has_colors()) {
-        ::endwin();
-    }
-    resize();
-    clear();
-    ::start_color();
-    ::init_pair(1, COLOR_BLUE, COLOR_BLACK);    //l
-    ::init_pair(2, COLOR_YELLOW, COLOR_BLACK);   //j
-    ::init_pair(3, COLOR_GREEN, COLOR_BLACK);//s
-    ::init_pair(4, COLOR_RED, COLOR_BLACK);  //z
-    ::init_pair(5, COLOR_MAGENTA, COLOR_BLACK);   //t
-    ::init_pair(6, COLOR_CYAN, COLOR_BLACK); //i
-    ::init_pair(7, COLOR_WHITE, COLOR_BLACK);  //o
-        bindings = {
-        {27, QUIT},//escape
-        {-1, NONE},
-        {'a', LEFT},
-        {'d', RIGHT},
-        {'s', DROP},
-        {' ', HARDDROP},
-        {'q', ROT_L},
-        {'e', ROT_R},
-        {'f', HOLD},
-        {'p', PAUSE},
-        {'r', REFRESH},
-        
-    };
 }
+
 console::console(std::string keybind_filename) 
 {
-    ::setlocale(LC_ALL, "");
-    ::initscr();
-    ::noecho();
-    ::cbreak();
 
-    ::curs_set(0);
-    if(!has_colors()) {
-        ::endwin();
-    }
-    resize();
-    clear();
-    ::start_color();
-    ::init_pair(1, COLOR_BLUE, COLOR_BLACK);    //l
-    ::init_pair(2, COLOR_YELLOW, COLOR_BLACK);   //j
-    ::init_pair(3, COLOR_GREEN, COLOR_BLACK);//s
-    ::init_pair(4, COLOR_RED, COLOR_BLACK);  //z
-    ::init_pair(5, COLOR_MAGENTA, COLOR_BLACK);   //t
-    ::init_pair(6, COLOR_CYAN, COLOR_BLACK); //i
-    ::init_pair(7, COLOR_WHITE, COLOR_BLACK);  //o
     bindings = {
         {27, QUIT},//escape
         {-1, NONE},
@@ -90,9 +42,7 @@ console::console(std::string keybind_filename)
         {'f', HOLD},
         {'p', PAUSE},
         {'r', REFRESH},
-        {KEY_DOWN, DROP}, 
-        {KEY_RIGHT, RIGHT}, 
-        {KEY_LEFT, LEFT}, 
+        
         
     };
     std::ifstream file (keybind_filename);
@@ -103,18 +53,18 @@ console::console(std::string keybind_filename)
         while(file >> K>>N){
             bindings[N] = K;
         }
-    
-    
-    
+    }
+    std::cout << "bindings:"<<std::endl;
+    for(auto p : bindings){
+        std::cout << p.first << ":" << p.second << std::endl;
     }
 }
+
+
 /**
  * Destruktor konsoli
  */
-console::~console()
-{
-    ::endwin();
-}
+
 
 /**
  * Funckcja ustawia w konsoli wielkość pola gry, żeby nie musiało być przekazywane za każdym razem kiedy chcemy coś wyświetlić.
@@ -123,38 +73,49 @@ console::~console()
  */
 void console::setGameField(int w, int h)
 {
-    gameFieldWidth = w;
+    std::cout << "Wymiary" << w<<":"<<h<<std::endl;
     gameFieldHeight = h;
+    gameFieldWidth = w;
+    field = new char* [h];
+    for(int i = 0; i < h; ++i){
+        field[i] = new char[w];
+    }
+    
+    
 }
 
+console::~console(){
+    for(int i = 0; i < gameFieldHeight; ++i){
+        delete[] field[i] ;
+    }
+    delete [] field;
+}
 /**
  * Funkcja czyści wyświetlany ekran
  */
 void console::clear()
 {
-    ::clear();
+   for(int y = 0;y<gameFieldHeight;++y){
+        for(int x = 0; x<gameFieldWidth;++x){
+            field[y][x] = 0;
+        }
+        
+    } 
 }
 
 void console::clear(int x, int y, int w, int h)
-{
-    attron(COLOR_PAIR(7));
-    for(int i = 0; i < h;i++){
-        for(int j = 0; j < w; j++){
-            mvprintw(y+i+offsetY, (x+j)*2+(width/2)-(gameFieldWidth)+offsetX, "  ");
-        }
-    }    
+{  
 }
 
 
 void console::move(int x, int y)
 {
-    ::move(y+offsetY, x+offsetX);
+    std::cout<< "Nowa pozycja"<<y+offsetY<<" "<< x+offsetX<<std::endl;
 }
 
 void console::print(std::string s)
 {
-    attron(COLOR_PAIR(7));
-    printw(s.c_str());
+std::cout << s<<std::endl;
 }
 
 /**
@@ -162,7 +123,6 @@ void console::print(std::string s)
  */
 void console::resize()
 {
-    getmaxyx(stdscr, height, width);
 //     offsetX = -width/4;
 }
 /**
@@ -171,21 +131,16 @@ void console::resize()
  */
 void console::setTimeout(int delay)
 {
-    ::timeout(delay);
-}
 
-void console::wait(){
-    while(getch()>0) {}
-    return;
 }
-
 /**
  * Funkcja zwraca klawisz wciśnięty przez użytkownika
  * @return wartość ascii znaku z klawiatury. -1 gdy minął czas oczekiwania.
  */
 key console::getInput()
 {
-    return bindings[getch()];
+    key x; std::cin >> x;
+    return (key)x;
 }
 /**
  * Funkcja rysuje kafelek na podanych współrzędnych i w podanym kolorze
@@ -193,19 +148,21 @@ key console::getInput()
  * @param y współrzędna y w polu gry
  * @param color wartość od 1-7 oznaczająca kolor kafelka
  */
+
+void console::wait(){
+    
+}
+
 void console::drawTile(int x, int y, int color, bool ghost)
 {
-    if(y>0){
-    attron(COLOR_PAIR(color));
-   // attron(A_REVERSE);
-    if(!ghost){
-        ::move(y+offsetY, x*2+(width/2)-(gameFieldWidth)+offsetX);
-        printw("🔲");
-    }else{
-        ::move(y+offsetY, x*2+(width/2)-(gameFieldWidth)+offsetX);
-        printw("⏹️ ");
+    if(y<gameFieldHeight && x<gameFieldWidth && x>=0&&y>=0){
+        if(ghost) {
+            field[y][x] = 'x';
+            
+        }else { field[y][x] = color+'0';}
     }
-    }
+//std::cout << "k:"<<x<<":"<<y<<"{"<<color<<","<<ghost<<"}"<<std::endl;
+
 }
 /**
  * Funkcja rysuje prostokąt pustej przestrzeni na podanych współrzędnych o podanych wymiarach
@@ -216,12 +173,8 @@ void console::drawTile(int x, int y, int color, bool ghost)
  */
 void console::drawEmpty(int x, int y, int w, int h)
 {
-    attron(COLOR_PAIR(7));
-    for(int i = 0; i < h;i++){
-        for(int j = 0; j < w; j++){
-            mvprintw(y+i+offsetY, (x+j)*2+(width/2)-(gameFieldWidth)+offsetX, "▫️️ ");
-        }
-    }
+    if(y<gameFieldHeight && x<gameFieldWidth&& x>=0&&y>=0)
+    field[y][x] = 0;
 }
 
 /**
@@ -233,21 +186,17 @@ void console::drawEmpty(int x, int y, int w, int h)
 
 void console::printData(int scr, int lvl, int goal)
 {
-    clear(gameFieldWidth, 1, 7, gameFieldHeight);
-    move((width/2)+gameFieldWidth+2, 1);
-    print("Level:"+std::to_string(lvl));
-    move((width/2)+gameFieldWidth+2, 2);
-    print("To LvlUp:"+std::to_string(goal));
-    move((width/2)+gameFieldWidth+2, 3);
-
-     print("🅢 🅒 🅞 🅡 🅔 "+std::to_string(scr));
-     
-     
     
-    move((width/2)+gameFieldWidth+2, 4);
-    print("Hold:");
-    move((width/2)+gameFieldWidth+2, 9);
-    print("Next:");
+    std::cout <<"Level:"<<std::to_string(lvl)<<std::endl;
+    std::cout <<"goal:"<<std::to_string(goal)<<std::endl;
+    std::cout <<"score:"<<std::to_string(scr)<<std::endl;
+    for(int y = 0;y<gameFieldHeight;++y){
+        for(int x = 0; x<gameFieldWidth;++x){
+            if(field[y][x])std::cout << field[y][x];
+            else std::cout << " ";
+        }
+        std::cout << std::endl;
+    }
 }
 
 
@@ -256,4 +205,4 @@ int console::getWidth()
     return width;
 }
 
-
+ 
