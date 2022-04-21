@@ -32,10 +32,10 @@ void tile::negateX(){
  */
 engine::engine(console & c, int w, int h, int lvl)
 {
-    
+
     conptr = &c;
-    conptr->out.setGameField(w, h);
-    std::queue<blockType> empty;
+    conptr->setGameField(w, h);
+    std::queue<std::shared_ptr<block>> empty;
     std::swap(blockQ, empty);
     field = new int* [h];
     width = w;
@@ -44,13 +44,16 @@ engine::engine(console & c, int w, int h, int lvl)
         field[i] = new int[w];
     }
     clearField();
+    conptr->clear();
+    conptr->resize();
     shuffle();
     spawn();
     spawn();
     level = lvl;
     goal = std::min(100, (level+1)*10);
-    holder = n;
+    
     held = false;
+    drawSide();
 }
 
 engine::~engine()
@@ -58,6 +61,10 @@ engine::~engine()
     for(int i = 0; i < engine::height; ++i){
         delete[] field[i] ;
     }
+    activePiece = nullptr;
+    ghostPiece = nullptr;
+    holdPiece = nullptr;
+    nextPiece = nullptr;
     delete [] field;
 }
 
@@ -71,7 +78,7 @@ int engine::getScore()
     return score;
 }
 
-void engine::giveUp()
+void engine::GiveUp()
 {
     end = true;
 }
@@ -90,22 +97,22 @@ void engine::incrementClock(int ammount)
 /** 
  * Funkcja przesuwa aktywny blok w lewo o 1 jednostkę
  */
-void engine::left()
+void engine::Left()
 {
 
-    activePiece.move(-1, 0);
-    if(collisionCheck(activePiece))activePiece.move(1, 0);
+    activePiece->move(-1, 0);
+    if(collisionCheck(*activePiece))activePiece->move(1, 0);
     ghostDrop();
     incrementClock();
 }
 /**
  * Funkcja przesuwa aktywny blok w prawo o 1 jednostkę
  */
-void engine::right()
+void engine::Right()
 {
     
-    activePiece.move(1, 0);
-    if(collisionCheck(activePiece))activePiece.move(-1, 0);
+    activePiece->move(1, 0);
+    if(collisionCheck(*activePiece))activePiece->move(-1, 0);
     ghostDrop();
     incrementClock();
     
@@ -116,28 +123,28 @@ void engine::right()
  */
 void engine::gravity()
 {
-    activePiece.move(0, 1);
-    if(collisionCheck(activePiece)){
-        activePiece.move(0, -1);
+    activePiece->move(0, 1);
+    if(collisionCheck(*activePiece)){
+        activePiece->move(0, -1);
         petrify();
     }
 }
 /**
  * Funkcja przesuwa aktywny blok w dół o 1 jednostkę
  */
-void engine::softdrop()
+void engine::SoftDrop()
 {
-    activePiece.move(0, 1);
-    if(collisionCheck(activePiece))activePiece.move(0, -1);
+    activePiece->move(0, 1);
+    if(collisionCheck(*activePiece))activePiece->move(0, -1);
     incrementClock(DEFAULT_TIME_ADDED/4);
     
 }
-void engine::harddrop()
+void engine::HardDrop()
 {
-    while(!collisionCheck(activePiece)){
-        activePiece.move(0, 1);
+    while(!collisionCheck(*activePiece)){
+        activePiece->move(0, 1);
     }
-    activePiece.move(0, -1);
+    activePiece->move(0, -1);
     petrify();
 
         
@@ -145,19 +152,19 @@ void engine::harddrop()
 /**
  * Funkcja obraca aktywny blok w kierunku przeciwnym do ruchu wskazówek zegara
  */
-void engine::rotateL()
+void engine::RotateL()
 {
-    activePiece.rotate(0);
-    if(collisionCheck(activePiece)){
-        activePiece.rotate(1);
-        left();
-        activePiece.rotate(0);
-        if(collisionCheck(activePiece)){
-            activePiece.rotate(1);
-            right();
-            activePiece.rotate(0);
-            if(collisionCheck(activePiece)){
-                activePiece.rotate(1);
+    activePiece->rotate(0);
+    if(collisionCheck(*activePiece)){
+        activePiece->rotate(1);
+        Left();
+        activePiece->rotate(0);
+        if(collisionCheck(*activePiece)){
+            activePiece->rotate(1);
+            Right();
+            activePiece->rotate(0);
+            if(collisionCheck(*activePiece)){
+                activePiece->rotate(1);
             }
         }
     }
@@ -167,19 +174,19 @@ void engine::rotateL()
 /**
  * Funkcja obraca aktywny blok w kierunku zgodnym z ruchem wskazówek zegara
  */
-void engine::rotateR()
+void engine::RotateR()
 {
-    activePiece.rotate(1);
-    if(collisionCheck(activePiece)){
-        activePiece.rotate(0);
-        right();
-        activePiece.rotate(1);
-        if(collisionCheck(activePiece)){
-            activePiece.rotate(0);
-            left();
-            activePiece.rotate(1);
-            if(collisionCheck(activePiece)){
-                activePiece.rotate(0);
+    activePiece->rotate(1);
+    if(collisionCheck(*activePiece)){
+        activePiece->rotate(0);
+        Right();
+        activePiece->rotate(1);
+        if(collisionCheck(*activePiece)){
+            activePiece->rotate(0);
+            Left();
+            activePiece->rotate(1);
+            if(collisionCheck(*activePiece)){
+                activePiece->rotate(0);
             }
         }
     }
@@ -187,30 +194,26 @@ void engine::rotateR()
     incrementClock(DEFAULT_TIME_ADDED/4);
 }
 void engine::ghostDrop(){
-    ghostPiece = activePiece;
-    ghostPiece.makeGhost();
-    while(!collisionCheck(ghostPiece)){
-        ghostPiece.move(0, 1);
+    
+    ghostPiece = std::make_shared<block>(*activePiece);
+    ghostPiece->makeGhost();
+    while(!collisionCheck(*ghostPiece)){
+        ghostPiece->move(0, 1);
     }
-    ghostPiece.move(0, -1);
+    ghostPiece->move(0, -1);
 }
 
-bool engine::ended()
-{
-    return end;
-}
 
 void engine::petrify()
 {
-    std::pair<int, int> *t;
-    t = activePiece.getTileCoords();
-    for(int i = 0; i<4; i++){
-        std::pair<int, int> p = *(t+i);
+    std::vector<std::pair<int, int>> t;
+    t = activePiece->getTileCoords();
+    for(auto p : t){
         if(p.second<=0)end = true;
-        else field[p.second][p.first] = activePiece.getShape();
+        else field[p.second][p.first] = activePiece->getShape();
     }
     scanLines();
-    activePiece.move(0, -height);
+    activePiece->move(0, -height);
     fallenUpdate = true;
     held = false;
 }
@@ -230,47 +233,81 @@ bool engine::fallen()
  * Funkcja rysuje aktywny blok
  * @param o obiekt wyświetlacza na którym ma być narysowany blok
  */
-void engine::drawPiece(display o){
-    ghostPiece.draw(o);
-    activePiece.draw(o);
+void engine::drawPiece(){
+   ghostPiece->draw(conptr);
+    activePiece->draw(conptr);
 }
 
-void engine::drawSide(display o)
+
+bool engine::work(){
+        
+        drawField();
+        drawPiece();
+      //  conptr->printData(score, level, goal);
+        key ch = conptr->getInput();
+        if(ch ==QUIT){
+            GiveUp();
+        }else if(ch==LEFT){
+            Left();
+        }else if(ch==PAUSE){
+            bool pauseloop = true;
+            conptr->move(conptr->getWidth()/2-3, 10);
+            conptr->print("PAUSED");
+            while(pauseloop){
+                
+                ch = conptr->getInput();
+                if(ch==PAUSE)pauseloop = false;
+            }
+        }else if(ch==HARDDROP){
+            HardDrop();
+        }else if(ch==DROP){
+            SoftDrop();
+        }else if(ch==RIGHT){
+            Right();
+        }else if(ch==REFRESH){
+            conptr->clear();
+            conptr->resize();
+        }else if(ch==HOLD){
+            Hold();
+            drawSide();
+        }else if(ch==ROT_L){
+            RotateL();
+        }else if(ch==ROT_R){
+            RotateR();
+        }else if(ch == NONE){
+            incrementClock();
+        }
+
+        if(fallen()){
+            spawn();
+            drawSide();
+        }
+    return !end;
+}
+
+void engine::drawSide()
 {
-    o.printData(score, level, goal);
-    if(holder)holdPiece.draw(o); 
-    nextPiece.set(width+2, 10, next);
-    nextPiece.draw(o);
+    conptr->printData(score, level, goal);
+    if(holdPiece!=nullptr)holdPiece->draw(conptr, width+3, 6); 
+    
+    nextPiece->draw(conptr, width+3, 12);
 }
 
-void engine::hold()
+void engine::Hold()
 {
     if(!held){
         held = true;
-        blockType temp = holder;
-        holder = activePiece.getShape();
-        holdPiece.set(width+2, 5, holder);
-        if(temp)spawn(temp);
+        std::shared_ptr<block> temp = holdPiece;
+        holdPiece= std::make_shared<block>(*activePiece);
+        if(temp!=nullptr)activePiece = std::make_shared<block>(*temp);
         else spawn();
     }
+    ghostDrop();
 }
 
 void engine::scoreIncrease(int n)
 {
-    switch(n){
-        case 1:
-           score += (level+1)*100;
-           break;
-        case 2:
-            score += (level+1)*100*3;
-            break;
-        case 3:
-            score += (level+1)*100*5;
-            break;
-        case 4:
-            score += (level+1)*100*8;
-            break;
-    }
+    score += floor(n*(n/2.7+0.76))*50*(level+1);
     goal -= n;
     if(goal<=0){
         level++;
@@ -279,10 +316,25 @@ void engine::scoreIncrease(int n)
 	
 }
 
+void block::set ( int x, int y )
+{
+    center = {x, y};
+}
+
 
 void engine::shuffle()
 {
-    std::vector<blockType> blocks={l, s,z,o,i,j,t};
+    std::vector<std::shared_ptr<block>> blocks={
+        std::make_shared<block_I>((width/2)-1,-3),
+        std::make_shared<block_II>((width/2)-1,-3),
+        std::make_shared<block__>((width/2)-1,-3),
+        std::make_shared<block_J>((width/2)-1,-3),
+        std::make_shared<block_L>((width/2)-1,-3),
+        std::make_shared<block_O>((width/2)-1,-3),
+        std::make_shared<block_S>((width/2)-1,-3),
+        std::make_shared<block_Z>((width/2)-1,-3),
+        std::make_shared<block_T>((width/2)-1,-3),
+    };
     std::shuffle(std::begin(blocks), std::end(blocks), std::default_random_engine( time( NULL )));
     for(auto b : blocks){
         blockQ.push(b);
@@ -306,15 +358,21 @@ void engine::clearField()
  */
 void engine::spawn(const blockType s)
 {
-    activePiece.set((width/2)-1,-3, s);
+    activePiece = std::make_shared<block>((width/2)-1,-3, s);
     ghostDrop();
 }
 void engine::spawn()
 {
-    activePiece.set((width/2)-1,-3, next);
-    
+  //  activePiece = nullptr;
     if(!blockQ.size())shuffle();
-    next = blockQ.front();
+    if(nextPiece != nullptr){
+        activePiece = std::make_shared<block>(*nextPiece);
+    }else{
+         activePiece = blockQ.front();
+         blockQ.pop();
+    }
+    nextPiece = blockQ.front();
+    
     blockQ.pop();
     ghostDrop();
     
@@ -332,14 +390,14 @@ void engine::setField(const int x, const int y, const int val){
  * Funkcja wyświetla tablicę na podany wyświetlacz
  * @param disp obiekt wyświetlacza
  */
-void engine::drawField(display disp)
+void engine::drawField()
 {
     for(int y = 0; y<height; y++){
         for(int x = 0; x<width; x++){
             if(field[y][x]){
-                disp.drawTile(x,y,field[y][x]);
+                conptr->drawTile(x,y,field[y][x]);
             }else{
-                disp.drawEmpty(x,y);
+                conptr->drawEmpty(x,y);
             }
         }
     }
@@ -377,14 +435,14 @@ int engine::scanLine(int y)
  */
 void engine::clearLine(int y)
 {
-    drawField(conptr->out);
+    drawField();
     for(int x =0; x<width;x++){
-     conptr->out.drawTile(x, y, field[y][x], true);   
+     conptr->drawTile(x, y, field[y][x], true);   
     }
-    conptr->in.getInput();
-    
-    conptr->out.drawEmpty(0, y, width);
-    conptr->in.getInput();
+    conptr->wait();
+    conptr->printData(score, level, goal);
+    conptr->drawEmpty(0, y, width);
+    conptr->wait();
     
     while(y>1){//kopiuj zawartość linijki nad y do y, powtarzaj aż dojdziesz do ostatniej linijki
         std::copy(field[y-1], field[y-1]+width, field[y]);
@@ -392,16 +450,19 @@ void engine::clearLine(int y)
     }
         
 }
+int block::countBlocks(){
+    return tiles.size();
+}
 /**
  * Funkcja sprawdza czy blok wyszedł poza ramy pola gry lub nachodzi na zajęte już komórki
  * @return true jeśli nastąpiła kolizja, w przeciwnym razie false
  */
 bool engine::collisionCheck(block &b)
 {
-    std::pair<int, int> *t;
+    std::vector<std::pair<int, int>> t;
     t = b.getTileCoords();
-    for(int i = 0; i<4; i++){
-        std::pair<int, int> p = *(t+i);
+
+    for(auto p : t){
         if(p.first<0||p.first>=width)return true;
         if(p.second >= 0){
             if(p.second>=height)return true;
@@ -415,13 +476,16 @@ bool engine::collisionCheck(block &b)
  * Funkcja oblicza absolutne współrzędne poszczególnych kafelków bloku
  * @return wskaźnik na tablicę par współrzędnych kafelków
  */
-std::pair<int, int> * block::getTileCoords()
+std::vector<std::pair<int, int>> block::getTileCoords()
 {
-    static std::pair<int, int> a[4];
-    a[0]= {center.first+tileA.x, center.second+tileA.y};//tileA
-    a[1]= {center.first+tileB.x, center.second+tileB.y};//tileB
-    a[2]= {center.first+tileC.x, center.second+tileC.y};//tileC
-    a[3]= {center.first+tileD.x, center.second+tileD.y};//tileD
+    std::vector<std::pair<int, int>> a;
+    for(auto t : tiles){
+           a.push_back({center.first+t.x, center.second+t.y});
+        }
+//     a[0]= {center.first+tileA.x, center.second+tileA.y};//tileA
+//     a[1]= {center.first+tileB.x, center.second+tileB.y};//tileB
+//     a[2]= {center.first+tileC.x, center.second+tileC.y};//tileC
+//     a[3]= {center.first+tileD.x, center.second+tileD.y};//tileD
     return a;
 }
 
@@ -460,12 +524,19 @@ blockType block::getShape()
  * Funkcja rysuje blok na podany wyświetlacz
  * @param disp obiekt wyświetlaczana którym ma być narysowany blok
  */
-void block::draw(display disp)
+void block::draw(console* disp)
 {
-    disp.drawTile(center.first+tileA.x, center.second+tileA.y, shape, ghost);//tileA
-    disp.drawTile(center.first+tileB.x, center.second+tileB.y, shape, ghost);//tileB
-    disp.drawTile(center.first+tileC.x, center.second+tileC.y, shape, ghost);//tileC
-    disp.drawTile(center.first+tileD.x, center.second+tileD.y, shape, ghost);//tileD
+    for(auto t : tiles){    
+        disp->drawTile(center.first+t.x, center.second+t.y, shape, ghost);//tileA
+    }
+}
+
+
+void block::draw(console* disp, int x, int y)
+{
+    for(auto t : tiles){    
+        disp->drawTile(x+t.x, y+t.y, shape, ghost);//tileA
+    }
 }
 
 
@@ -481,25 +552,19 @@ void block::rotate(bool clockWise)
     if(clockWise){
         rotation++;
         if(rotation>3)rotation=0;
-        tileA.swap();
-        tileB.swap();
-        tileC.swap();
-        tileD.swap();
-        tileA.negateX();
-        tileB.negateX();
-        tileC.negateX();
-        tileD.negateX();
+        for(auto &t : tiles){
+            t.swap();
+            t.negateX();
+        }
+
     }else{
         rotation--;
         if(rotation<0)rotation=1;
-        tileA.negateX();
-        tileB.negateX();
-        tileC.negateX();
-        tileD.negateX();
-        tileA.swap();
-        tileB.swap();
-        tileC.swap();
-        tileD.swap();
+        for(auto &t:tiles){
+            t.negateX();
+            t.swap();
+        }
+
         
     }
     
@@ -515,66 +580,14 @@ void block::move(int x, int y)
     center.second+=y;
 }
 
-/**
- * Funkcja ustawia wartości bloku. 
- * @param x nowa wpółrzędna x środka bloku
- * @param y nowa wpółrzędna y środka bloku
- * @param sh kształt który ma mieć blok
- */
-void block::set(int x, int y, blockType sh)
+block::~block()
+{
+    
+}
+block::block(int x, int y, blockType s)
 {
     center = {x, y};
-    rotation = 0;
-    shape = sh;
-    tileD = {0,0};
-    switch(sh){
-        case n:
-            tileA= {0,0};
-            tileB= {0,0};
-            tileC= {0,0};
-        case l:
-            tileA = {1,0};
-            tileB = {-1,0};
-            tileC = {-1,1};
-            
-            break;
-        case j:
-            tileA = {1,0};
-            tileB = {-1,0};
-            tileC = {1,1};
-            break;
-        case t:
-            tileA = {1,0};
-            tileB = {-1,0};
-            tileC = {0,1};
-            break;
-        case s:
-            tileA = {1,0};
-            tileB = {0,1};
-            tileC = {-1,1};
-            break;
-        case z:
-            tileA = {-1,0};
-            tileB = {0, 1};
-            tileC = {1,1};
-            break;
-        case o:
-            tileA = {-0.5,-0.5};
-            tileB = {0.5, -0.5};
-            tileC = {-0.5,0.5};
-            tileD = {0.5,0.5};
-            center = {x+0.5, y+0.5};
-            break;   
-        case i:
-            tileA = {0.5,0.5};
-            tileB = {-0.5,0.5};
-            tileC = {-1.5,0.5};
-            tileD = {1.5,0.5};
-            center = {x+0.5, y+0.5};
-            break; 
-    }
+    
+    shape = s;
+
 }
-
-
-
-
