@@ -34,6 +34,7 @@ class console {
     int offsetY=-1;
     int gameFieldWidth=0;
     int gameFieldHeight=0;
+    void clear_abs(int x, int y, int w=1, int h=1);
 public:
     
     
@@ -53,7 +54,7 @@ public:
     int getWidth();
     void move(int x, int y);
     void print(std::string s);
-    
+    std::string prompt(std::string question);
     void printCenter(std::string s, int y, bool h=false);
 
     void print_highlight(std::string s);

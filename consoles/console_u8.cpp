@@ -145,6 +145,16 @@ void console::clear(int x, int y, int w, int h)
     }
 }
 
+void console::clear_abs(int x, int y, int w, int h)
+{
+    attron(COLOR_PAIR(7));
+    for(int i = 0; i < h; i++) {
+        for(int j = 0; j < w; j++) {
+            mvprintw(y+i, (x+j), " ");
+        }
+    }
+}
+
 
 
 
@@ -230,6 +240,67 @@ void console::drawTile(int x, int y, int color, bool ghost)
         }
     }
 }
+
+
+std::string console::prompt(std::string question)
+{
+    std::string out;
+    int corX, corY;
+    corX = (width/2)-(question.length()/2);
+    corY = height/2-3;
+    clear_abs(corX, corY, question.length()+2, 6);
+    move(corX, corY+1);
+    print("┏");
+    for(int i = 0; i<question.length();++i){
+        print("━");
+    }
+    print("┓");
+    move(corX, corY+5);
+    print("┗");
+    for(int i = 0; i<question.length();++i){
+        print("━");
+    }
+    print("┛");
+    move(corX, corY+2);
+    print("┃"+question+"┃");
+    move(corX, corY+3);
+    print("┃");
+    move(corX+question.length()+1, corY+3);
+    print("┃");
+    move(corX, corY+4);
+    print("┃");
+    move(corX+question.length()+1, corY+4);
+    print("┃");
+    int q;
+    bool loop = true;
+    while(loop){
+        q = ::getch();
+        if(q>0){
+            if(q=='\n'||q==27) 
+                loop = false;
+            else{
+                if(q==8){
+                    if(out.length()){
+                        out.pop_back(); 
+                        clear_abs(corX+1, corY+3, out.length()+1, 1);
+                    }
+                }else{
+                    out+=(char)q;
+                }
+                
+                move(corX+1, corY+4);
+                print(out);
+                
+                
+                
+            }
+        }
+    }
+    return out;
+}
+
+
+
 /**
  * Funkcja rysuje prostokąt pustej przestrzeni na podanych współrzędnych o podanych wymiarach
  * @param x wpółrzędna x
