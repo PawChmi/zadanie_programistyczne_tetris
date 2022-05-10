@@ -53,6 +53,10 @@ public:
     int getWidth();
     void move(int x, int y);
     void print(std::string s);
+    
+    void printCenter(std::string s, int y, bool h=false);
+
+    void print_highlight(std::string s);
 };
 
 
