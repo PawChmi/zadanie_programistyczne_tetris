@@ -1,1 +1,6 @@
-right 65
+right 0405
+left 0404
+drop 0
+harddrop 0
+hold 0
+

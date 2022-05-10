@@ -58,27 +58,33 @@ public:
 
 class block_L : public block{
 public:
-    block_L(int x =0, int y = 0):block(x,y,l){
+    block_L(int x =0, int y = 0, blockType sh=l):block(x,y,sh){
         tiles={ {0, 0}, {-1, 1}, {-1,0},{1,0}};
     };
 };
 class block_J : public block{
 public:
-    block_J(int x =0, int y = 0):block(x,y,j){
+    block_J(int x =0, int y = 0, blockType sh=j):block(x,y,sh){
             tiles= {{0, 0},{1,0},{-1,0},{1,1}};
     };
 };
 class block_O : public block{
 public:
-    block_O(int x =0, int y = 0) : block(x, y, o)  {
+    block_O(int x =0, int y = 0, blockType sh=o) : block(x, y, sh)  {
         tiles = {{-0.5,-0.5},{0.5, -0.5},{-0.5,0.5},{0.5,0.5}};
         center = {x+0.5, y+0.5};
+    };
+};
+class block_O_offcenter : public block{
+public:
+    block_O_offcenter(int x =0, int y = 0, blockType sh=o) : block(x, y, sh)  {
+        tiles = {{3,3},{3,4},{4,4},{4,3}};
     };
 };
 class block_S : public block{
 
 public:
-    block_S(int x =0, int y = 0)   : block(x,y,s)
+    block_S(int x =0, int y = 0, blockType sh=s)   : block(x,y,sh)
     {
 
     tiles={ {1,0}, {0,1},{-1,1},{0,0}};
@@ -87,28 +93,36 @@ public:
 class block_Z : public block{
 
 public:
-    block_Z(int x =0, int y = 0):block(x,y,z){
+    block_Z(int x =0, int y = 0, blockType sh=z):block(x,y,sh){
          tiles = {{0,0},{-1,0}, {0, 1},{1,1}};
     };
 };
 class block__ : public block{
 
 public:
-    block__(int x =0, int y = 0):block(x,y,z){
+    block__(int x =0, int y = 0, blockType sh=j):block(x,y,sh){
          tiles = {{1,0}};
     };
 };
 class block_I : public block{
 public:
-    block_I(int x =0, int y = 0):block(x,y,i){
+    block_I(int x =0, int y = 0, blockType sh=i):block(x,y,sh){
             
     tiles ={ {0.5,0.5}, {-0.5,0.5}, {-1.5,0.5},{1.5,0.5}};
     center = {x+0.5, y+0.5};
     };
 };
+class block_slash : public block{
+public:
+    block_slash(int x =0, int y = 0, blockType sh=t):block(x,y,sh){
+            
+    tiles ={ {0.5,0.5}, {-0.5,-0.5}, {-1.5,-1.5},{1.5,1.5}};
+    center = {x+0.5, y+0.5};
+    };
+};
 class block_II : public block{
 public:
-    block_II(int x =0, int y = 0):block(x,y,i){
+    block_II(int x =0, int y = 0, blockType sh=s):block(x,y,sh){
             
     tiles ={ {0.5,0.5}, {-0.5,0.5}, {-1.5,0.5},{1.5,0.5}, {2.5,0.5}, {-2.5,0.5}, {-3.5,0.5},{3.5,0.5}};
     center = {x+0.5, y+0.5};
@@ -116,28 +130,55 @@ public:
 };
 class block_T : public block{
 public:
-    block_T(int x =0, int y = 0):block(x,y,t){
+    block_T(int x =0, int y = 0, blockType sh=t):block(x,y,sh){
         tiles ={ {0,0}, {1,0}, {-1,0},{0,1}};
     };
+};
+class block_Y : public block{
+public:
+    block_Y(int x =0, int y = 0, blockType sh=o):block(x,y,sh){
+        tiles ={ {0,0}, {1,-1}, {-1,-1},{0,1}};
+    };
+};
+class block_Tri : public block{
+public:
+    block_Tri(int x =0, int y = 0, blockType sh=z):block(x,y,sh){
+         tiles ={ {0.5,0.5}, {-0.5,-0.5}, {-1.5,-1.5},{1.5,1.5}, {0.5,1.5}, {-0.5,1.5}, {-1.5,-0.5},{-1.5,0.5},{-1.5,1.5}};
+        center = {x+0.5, y+0.5};
+    };
+
+};
+class block_E : public block{
+public:
+    block_E(int x =0, int y = 0, blockType sh=l):block(x,y,sh){
+         tiles ={{0,0}, {1,0},{-1,0},{-1,-1}, {-1, 1}, {-1,-2}, {-1, 2}, {0,2}, {0,-2},{1,2}, {1,-2}};
+       
+    };
+
+};
+class block_F : public block{
+public:
+    block_F(int x =0, int y = 0, blockType sh=j):block(x,y,sh){
+         tiles ={{0,0}, {1,0},{-1,0},{-1,-1}, {-1, 1}, {-1, 2},{-1,-2} , {0,-2}, {1,-2}};
+       
+    };
+
 };
 
 
 class engine {
+protected:
+    int height;
+    int width; 
+    bool end = false;
     int level=1;
     int score=0;
     int clock=0;
-    int height;
-    int width; 
     int goal = 0;
-    bool end = false;
     std::queue<std::shared_ptr<block>> blockQ;
     bool fallenUpdate=false;
-    
-    blockType next=n;
     bool held=false;
     int ** field;
-  //  int field[fieldHeight][fieldWidth];
-    
     std::shared_ptr<block> activePiece;
     std::shared_ptr<block>  nextPiece=nullptr;
     std::shared_ptr<block> ghostPiece;
@@ -148,14 +189,13 @@ class engine {
     void petrify();
     void clearLine(int y);
     void scanLines();
-    void shuffle();
+    virtual void shuffle();
     void scoreIncrease(int n);
     void clearField();
     void setField(const int x, const int y, const int val);
     void gravity();
     void ghostDrop();
     void drawField();
-    void spawn(const blockType s);
     void spawn();
     void Left();
     void Right();
@@ -167,14 +207,55 @@ class engine {
     void Hold();
     void drawPiece();
     void drawSide();
-    void reset();
     bool fallen();
     void GiveUp();
 public:
     bool work();
     int getScore();
     engine(console & c, int w=10, int h=20, int lvl = 1);
-    ~engine();
+    virtual ~engine();
+    
+};
+class classic : public engine{
+protected:
+    void shuffle();
+public:
+    classic(console &c, int w=10, int h = 20, int lvl=1) : engine(c, w, h, lvl){
+        c.print("GameMode: Classic");
+        std::queue<std::shared_ptr<block>> empty;
+        std::swap(blockQ, empty);
+        classic::shuffle();
+        spawn();
+        spawn();
+    };
+    
+};
+class justice : public engine{
+protected:
+    void shuffle();
+public:
+    justice(console &c, int w=10, int h = 20, int lvl=1) : engine(c, w, h, lvl){
+        c.print("GameMode: Justice");
+        std::queue<std::shared_ptr<block>> empty;
+        std::swap(blockQ, empty);
+        justice::shuffle();
+        spawn();
+        spawn();
+    };
+    
+};
+class ludicrous : public engine{
+protected:
+    void shuffle();
+public:
+    ludicrous(console &c, int w=10, int h = 20, int lvl=1) : engine(c, w, h, lvl){
+        c.print("GameMode: Ludicrous");
+        std::queue<std::shared_ptr<block>> empty;
+        std::swap(blockQ, empty);
+        ludicrous::shuffle();
+        spawn();
+        spawn();
+    };
     
 };
 

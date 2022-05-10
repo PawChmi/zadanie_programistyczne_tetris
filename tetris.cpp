@@ -35,6 +35,7 @@ engine::engine(console & c, int w, int h, int lvl)
 
     conptr = &c;
     conptr->setGameField(w, h);
+    conptr->setTimeout(100);
     std::queue<std::shared_ptr<block>> empty;
     std::swap(blockQ, empty);
     field = new int* [h];
@@ -46,14 +47,13 @@ engine::engine(console & c, int w, int h, int lvl)
     clearField();
     conptr->clear();
     conptr->resize();
-    shuffle();
-    spawn();
-    spawn();
+//     shuffle();
+//     spawn();
+//    spawn();
     level = lvl;
     goal = std::min(100, (level+1)*10);
-    
+   fallenUpdate = true;
     held = false;
-    drawSide();
 }
 
 engine::~engine()
@@ -65,6 +65,7 @@ engine::~engine()
     ghostPiece = nullptr;
     holdPiece = nullptr;
     nextPiece = nullptr;
+    conptr->setTimeout(250);
     delete [] field;
 }
 
@@ -240,10 +241,13 @@ void engine::drawPiece(){
 
 
 bool engine::work(){
-        
+        if(fallen()){
+            spawn();
+            drawSide();
+        }
         drawField();
         drawPiece();
-      //  conptr->printData(score, level, goal);
+//         conptr->printData(score, level, goal);
         key ch = conptr->getInput();
         if(ch ==QUIT){
             GiveUp();
@@ -278,10 +282,7 @@ bool engine::work(){
             incrementClock();
         }
 
-        if(fallen()){
-            spawn();
-            drawSide();
-        }
+        
     return !end;
 }
 
@@ -326,14 +327,55 @@ void engine::shuffle()
 {
     std::vector<std::shared_ptr<block>> blocks={
         std::make_shared<block_I>((width/2)-1,-3),
-        std::make_shared<block_II>((width/2)-1,-3),
-        std::make_shared<block__>((width/2)-1,-3),
+        std::make_shared<block_slash>((width/2)-1,-3),
+//         std::make_shared<block_II>((width/2)-1,-3),
+//         std::make_shared<block__>((width/2)-1,-3),
+//         std::make_shared<block_J>((width/2)-1,-3),
+//         std::make_shared<block_L>((width/2)-1,-3),
+//         std::make_shared<block_O>((width/2)-1,-3),
+//         std::make_shared<block_S>((width/2)-1,-3),
+//         std::make_shared<block_Z>((width/2)-1,-3),
+//         std::make_shared<block_T>((width/2)-1,-3),
+        std::make_shared<block_F>((width/2)-1,-3),
+        std::make_shared<block_E>((width/2)-1,-3),
+    };
+    std::shuffle(std::begin(blocks), std::end(blocks), std::default_random_engine( time( NULL )));
+    for(auto b : blocks){
+        blockQ.push(b);
+    }
+}
+void classic::shuffle()
+{
+    std::vector<std::shared_ptr<block>> blocks={
+        std::make_shared<block_I>((width/2)-1,-3),
         std::make_shared<block_J>((width/2)-1,-3),
-        std::make_shared<block_L>((width/2)-1,-3),
         std::make_shared<block_O>((width/2)-1,-3),
+        std::make_shared<block_L>((width/2)-1,-3),
         std::make_shared<block_S>((width/2)-1,-3),
         std::make_shared<block_Z>((width/2)-1,-3),
         std::make_shared<block_T>((width/2)-1,-3),
+    };
+    std::shuffle(std::begin(blocks), std::end(blocks), std::default_random_engine( time( NULL )));
+    for(auto b : blocks){
+        blockQ.push(b);
+    }
+}
+void justice::shuffle()
+{
+    std::vector<std::shared_ptr<block>> blocks={
+        std::make_shared<block_T>((width/2)-1,-3),
+    };
+    std::shuffle(std::begin(blocks), std::end(blocks), std::default_random_engine( time( NULL )));
+    for(auto b : blocks){
+        blockQ.push(b);
+    }
+}
+void ludicrous::shuffle()
+{
+    std::vector<std::shared_ptr<block>> blocks={
+        std::make_shared<block_E>((width/2)-1,-3),
+        std::make_shared<block_F>((width/2)-1,-3),
+        std::make_shared<block_O_offcenter>((width/2)-1,-3),
     };
     std::shuffle(std::begin(blocks), std::end(blocks), std::default_random_engine( time( NULL )));
     for(auto b : blocks){
@@ -356,15 +398,11 @@ void engine::clearField()
  * Funkcja ustawia aktywny blok na podany kształt w pozycji początkowej
  * @param s kształt jaki ma przyjąć nowy blok
  */
-void engine::spawn(const blockType s)
-{
-    activePiece = std::make_shared<block>((width/2)-1,-3, s);
-    ghostDrop();
-}
+
 void engine::spawn()
 {
   //  activePiece = nullptr;
-    if(!blockQ.size())shuffle();
+    if(blockQ.size()<2)shuffle();
     if(nextPiece != nullptr){
         activePiece = std::make_shared<block>(*nextPiece);
     }else{

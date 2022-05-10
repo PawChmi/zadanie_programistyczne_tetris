@@ -1,4 +1,6 @@
 #include "tetris.h"
+
+#include "menu.h"
 #include "consoles/console.h"
 #include <cstdlib>
 #include <iostream>
@@ -12,16 +14,21 @@ int main(int argc, char* argv[]) {
 
     console con("kb.txt");
 
+    menu m(con);
 
-    bool ext = 1;
-    con.setTimeout(100);
-    while(ext){
-        std::unique_ptr<engine> game(new engine(con, 10, 20));
+    std::shared_ptr<engine> game;
+    
+    while(true){
+        game = m.result();
+        if(game == nullptr)return 0;
+
         while(game->work()) {
             //absolutely nothing has to happen here, it's just a loop.
         }
+        con.clear();
         std::cout << game->getScore()<<"\n";
-        }
-        if(con.getInput() == QUIT)ext = 0;
+        game = nullptr;
+        
+    }
     return 0;
 }
