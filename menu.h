@@ -2,6 +2,9 @@
 #include "consoles/console.h"
 #include "tetris.h"
 #include <vector>
+#include <map>
+#include <fstream>
+#include <sstream>
 
 
 /** 
@@ -32,8 +35,9 @@ class menu{
     dial choice, gamemode, lvl, width, height;
     console * conptr;
     int animation_frame;
-    int colors[6] = {4, 2, 3, 6,  1, 5};
-    std::vector<std::vector<int>>logo = {
+    const int colors[6] = {4, 2, 3, 6,  1, 5};
+    std::map<int, std::string> scores;
+    const std::vector<std::vector<int>>logo = {
         {-12,1,0},//T
         {-11,1,0},
         {-10,1,0},
@@ -89,6 +93,8 @@ class menu{
 public:
     std::shared_ptr<engine> result();
     menu(console & c);
+    ~menu();
+    void record(int score, std::string name);
 };
 
 

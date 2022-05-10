@@ -7,7 +7,34 @@ menu::menu(console & c) {
     width = {10, conptr->getWidth()/2-1, 6};
     gamemode = {0, 2};
     conptr->setTimeout(250);
+    std::ifstream scr_file("scores.dat");
+    if(scr_file){
+        std::string tmp;
+        while(getline(scr_file, tmp))
+        {
+            int s;
+            std::string name;
+            std::stringstream ss(tmp);
+            ss >> s;
+            getline(ss, scores[-s]);
+        }
+        
+    }scr_file.close();
 }
+menu::~menu(){
+    std::ofstream scr_file("scores.dat");
+    if(scr_file){
+        for(auto el:scores){
+            scr_file << -el.first << " " << el.second <<std::endl;
+        }
+    }
+    scr_file.close();
+}
+void menu::record(int score, std::string name)
+{
+    scores[-score] = name;
+}
+
 int dial::val()
 {
     return value;
@@ -42,6 +69,12 @@ void menu::draw() {
     conptr->printCenter("LVL:"+std::to_string(lvl), line++, (choice==1));
     conptr->printCenter("Width:"+std::to_string(width), line++, (choice==2));
     conptr->printCenter("Height:"+std::to_string(height), line++, (choice==3));
+    ++line;
+    conptr->printCenter("HIGH SCORES", line++);
+    for(auto el : scores){
+        conptr->printCenter(el.second+"\t"+std::to_string(-el.first), line++);
+    }
+    
 
 
 
