@@ -51,7 +51,7 @@ engine::engine(console & c, int w, int h, int lvl)
 //     spawn();
 //    spawn();
     level = lvl;
-    goal = std::min(100, (level+1)*10);
+    goal = std::min(100, (level+1)*4);
    fallenUpdate = true;
     held = false;
 }
@@ -312,7 +312,7 @@ void engine::scoreIncrease(int n)
     goal -= n;
     if(goal<=0){
         level++;
-        goal = std::min(100, (level+1)*10);
+        goal = std::min(100, (level+1)*4);
     }
 	
 }
