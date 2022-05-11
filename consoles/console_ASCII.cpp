@@ -216,7 +216,7 @@ std::string console::prompt(std::string question)
             if(q=='\n'||q==27) 
                 loop = false;
             else{
-                if(q==8){
+                if(q==8||q==127){
                     if(out.length()){
                         out.pop_back(); 
                         clear_abs(corX+1, corY+3, out.length()+1, 1);
