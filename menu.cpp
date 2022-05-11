@@ -1,7 +1,8 @@
 #include "menu.h"
+
 menu::menu(console & c) {
     conptr = &c;
-    choice = {0, 3};
+    choice = {0, 4};
     lvl = {1, 100, 1};
     height = {20, 100, 10};
     width = {10, conptr->getWidth()/2-1, 6};
@@ -32,6 +33,8 @@ menu::~menu(){
 }
 void menu::record(int score, std::string name)
 {
+    if(name.find_first_not_of(" \n\t\v\f\r") == std::string::npos) //the string is just white spaces
+        name = "Player";
     scores[-score] = name;
 }
 
@@ -69,10 +72,12 @@ void menu::draw() {
     conptr->printCenter("LVL:"+std::to_string(lvl), line++, (choice==1));
     conptr->printCenter("Width:"+std::to_string(width), line++, (choice==2));
     conptr->printCenter("Height:"+std::to_string(height), line++, (choice==3));
+    conptr->printCenter("Controls", line++, (choice==4));
     ++line;
     conptr->printCenter("HIGH SCORES", line++);
     for(auto el : scores){
-        conptr->printCenter(el.second+"\t"+std::to_string(-el.first), line++);
+        if(line < conptr->getHeight())
+            conptr->printCenter(el.second+"\t"+std::to_string(-el.first), line++);
     }
     
 
@@ -122,18 +127,22 @@ std::shared_ptr<engine> menu::result() {
                 break;
             }
         }
-        else if (ch == HARDDROP&&!choice) {
+        else if (ch == HARDDROP){
+            if(!choice) {
 
-            switch(gamemode) {
-            case 0:
-                return std::make_shared<classic>(*conptr, width, height, lvl);
-                break;
-            case 1:
-                return std::make_shared<justice>(*conptr, width, height, lvl);
-                break;
-            case 2:
-                return std::make_shared<ludicrous>(*conptr, width, height, lvl);
-                break;
+                switch(gamemode) {
+                case 0:
+                    return std::make_shared<classic>(*conptr, width, height, lvl);
+                    break;
+                case 1:
+                    return std::make_shared<justice>(*conptr, width, height, lvl);
+                    break;
+                case 2:
+                    return std::make_shared<ludicrous>(*conptr, width, height, lvl);
+                    break;
+                }
+            }else if(choice==4){
+                configureKeyBinds();
             }
 
         }else if(ch==NONE){
@@ -141,4 +150,64 @@ std::shared_ptr<engine> menu::result() {
         }
     }
     return nullptr;
+}
+
+std::ostream& operator << (std::ostream& o, const key& K) {
+    switch(K){
+        case LEFT:
+            o << "left";
+            break;
+        case RIGHT:
+            o << "right";
+            break;
+        case DROP:
+            o << "drop";
+            break;
+        case HARDDROP:
+            o << "harddrop";
+            break;
+        case HOLD:
+            o << "hold";
+            break;
+        case ROT_L:
+            o << "rotate_left";
+            break;
+        case ROT_R:
+            o << "rotate_right";
+            break;
+        case PAUSE:
+            o << "pause";
+            break;
+        case REFRESH:
+            o << "pause";
+            break;
+        case QUIT:
+            o << "pause";
+            break;
+        default:
+            o << "unknown";
+    };
+    return o;
+}
+void menu::configureKeyBinds(){
+    std::map<int, key> bindings;
+    bindings[conptr->prompt_key("     left       ")] = LEFT;
+    bindings[conptr->prompt_key("     right      ")] = RIGHT;
+    bindings[conptr->prompt_key("   soft drop    ")] = DROP;
+    bindings[conptr->prompt_key("   hard drop    ")] = HARDDROP;
+    bindings[conptr->prompt_key("  rotate left   ")] = ROT_L;
+    bindings[conptr->prompt_key("  rotate right  ")] = ROT_R;
+    bindings[conptr->prompt_key("      hold      ")] = HOLD;
+    std::ofstream kb_file(conptr->prompt("Filename?", 20));
+    if(kb_file){
+        for(auto k : bindings){
+            kb_file << k.second << " ";
+            if(k.first > 5)
+                    kb_file << k.first ;
+            else
+                    kb_file << k.first+400;
+            kb_file<<std::endl;
+            
+        }
+    }
 }

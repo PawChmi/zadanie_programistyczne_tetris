@@ -90,6 +90,7 @@ class menu{
         
     };
     void draw();
+    void configureKeyBinds();
 public:
     std::shared_ptr<engine> result();
     menu(console & c);

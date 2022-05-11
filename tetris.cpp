@@ -256,7 +256,9 @@ bool engine::work(){
         }else if(ch==PAUSE){
             bool pauseloop = true;
             conptr->move(conptr->getWidth()/2-3, 10);
-            conptr->print("PAUSED");
+            conptr->printCenter("        ", height/2-1, true);
+            conptr->printCenter(" PAUSED ", height/2, true);
+            conptr->printCenter("        ", height/2+1, true);
             while(pauseloop){
                 
                 ch = conptr->getInput();
