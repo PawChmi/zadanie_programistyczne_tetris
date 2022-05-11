@@ -432,7 +432,7 @@ void engine::setField(const int x, const int y, const int val){
  */
 void engine::drawField()
 {
-    for(int y = 0; y<height; y++){
+    for(int y = 1; y<height; y++){
         for(int x = 0; x<width; x++){
             if(field[y][x]){
                 conptr->drawTile(x,y,field[y][x]);
