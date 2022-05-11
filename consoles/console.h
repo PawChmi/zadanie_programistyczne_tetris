@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 #include <map>
+#include <algorithm>
 
 
 enum key {
@@ -52,13 +53,14 @@ public:
     void resize();
     void setGameField(int w, int h);
     int getWidth();
+    int getHeight();
     void move(int x, int y);
     void print(std::string s);
-    std::string prompt(std::string question);
+    std::string prompt(std::string question, int limit = 0);
+    int prompt_key(std::string question);
     void printCenter(std::string s, int y, bool h=false);
 
     void print_highlight(std::string s);
 };
-
 
 #endif // console_ASCII_H

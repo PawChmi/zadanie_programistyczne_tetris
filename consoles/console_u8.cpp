@@ -21,6 +21,7 @@ std::istream& operator >> (std::istream& i, key& K) {
     return i;
 }
 
+
 console::console()
 {
     ::setlocale(LC_ALL, "");
@@ -241,23 +242,43 @@ void console::drawTile(int x, int y, int color, bool ghost)
     }
 }
 
+std::string centrify(std::string str, const int &w){
+    int rem = w-str.length();
+    std::string out;
+    for(int i = 0; i < rem/2; ++i){
+        out += " ";
+    }
+    out += str;
+    while(out.length() < w){
+        out +=" ";
+    }
+    return out;
+}
 
-std::string console::prompt(std::string question)
+int console::prompt_key(std::string question)
+{
+    return (int) prompt(question, 1)[0];
+}
+
+std::string console::prompt(std::string question, int limit)
 {
     std::string out;
+    if(!limit)limit=question.length();
     int corX, corY;
-    corX = (width/2)-(question.length()/2);
+    int w = std::max((int)question.length(), limit);
+    question = centrify(question, w);
+    corX = (width/2)-(w/2);
     corY = height/2-3;
-    clear_abs(corX, corY, question.length()+2, 6);
+    clear_abs(corX, corY, w+2, 6);
     move(corX, corY+1);
     print("┏");
-    for(int i = 0; i<question.length();++i){
+    for(int i = 0; i<w;++i){
         print("━");
     }
     print("┓");
     move(corX, corY+5);
     print("┗");
-    for(int i = 0; i<question.length();++i){
+    for(int i = 0; i<w;++i){
         print("━");
     }
     print("┛");
@@ -265,11 +286,11 @@ std::string console::prompt(std::string question)
     print("┃"+question+"┃");
     move(corX, corY+3);
     print("┃");
-    move(corX+question.length()+1, corY+3);
+    move(corX+w+1, corY+3);
     print("┃");
     move(corX, corY+4);
     print("┃");
-    move(corX+question.length()+1, corY+4);
+    move(corX+w+1, corY+4);
     print("┃");
     int q;
     bool loop = true;
@@ -282,14 +303,14 @@ std::string console::prompt(std::string question)
                 if(q==8||q==127){
                     if(out.length()){
                         out.pop_back(); 
-                        clear_abs(corX+1, corY+3, out.length()+1, 1);
+                        //clear_abs(corX+1, corY+3, out.length()+1, 1);
                     }
-                }else{
+                }else if(out.length()<limit){
                     out+=(char)q;
                 }
                 
                 move(corX+1, corY+4);
-                print(out);
+                print(centrify(out, w));
                 
                 
                 
@@ -348,6 +369,10 @@ void console::printData(int scr, int lvl, int goal)
 int console::getWidth()
 {
     return width;
+}
+int console::getHeight()
+{
+    return height;
 }
 
 
