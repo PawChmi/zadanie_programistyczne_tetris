@@ -1,5 +1,5 @@
 #pragma once
-#include "consoles/console.h"
+#include "console.h"
 #include "tetris.h"
 #include <vector>
 #include <map>

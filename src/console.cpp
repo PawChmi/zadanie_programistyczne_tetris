@@ -106,7 +106,7 @@ console::console(const std::string keybind_filename, const bool unicode, const b
         }
     }
     if(unicode){
-        font =  {0, "▫️️ ", "⏹️ ", "🔲", "━", "┃", "┏", "┓","┗", "┛"};
+        font =  {0, "▫️️ ", "⏹️ ", "🔲", "━", "┃", "┓","┏", "┗", "┛"};
         
     }else if(reverse){
         font.empty = "::";

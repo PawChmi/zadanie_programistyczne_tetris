@@ -1,7 +1,7 @@
 #include "tetris.h"
 
 #include "menu.h"
-#include "consoles/console.h"
+#include "console.h"
 #include <cstdlib>
 #include <iostream>
 #include <fstream>

@@ -8,7 +8,7 @@
 #include <vector>
 #include <algorithm>
 #include <random>
-#include "consoles/console.h"
+#include "console.h"
 typedef std::pair<double, double> coords;
 enum blockType { //this one is just used for colors
     n = 0,
