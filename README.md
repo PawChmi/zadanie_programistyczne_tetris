@@ -1,5 +1,10 @@
 # Zadanie Programistyczne: Tetris
 Program wykorzystuje bibliotekę curses.
+Kompilowanie z cmake:
+`cmake . && make`
+Uruchomienie programu:
+`./tetris`
+
 ```
 This is a console based tetris game
 
