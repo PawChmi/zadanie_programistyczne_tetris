@@ -2,10 +2,12 @@
 #include <curses.h>
 
 
-std::istream& operator >> (std::istream& i, key& K) {
+std::istream& operator >> (std::istream& i, key& K) 
+{
     K = UNKNOWN;
     std::string S;
-    if(i >> S) {
+    if(i >> S) 
+    {
         if(S=="right")K = RIGHT;
         else if(S=="left")K = LEFT;
         else if(S=="drop")K = DROP;
@@ -21,44 +23,7 @@ std::istream& operator >> (std::istream& i, key& K) {
     return i;
 }
 
-
-console::console()
-{
-    ::setlocale(LC_ALL, "");
-    ::initscr();
-    ::noecho();
-    ::cbreak();
-
-    ::curs_set(0);
-    if(!has_colors()) {
-        ::endwin();
-    }
-    resize();
-    clear();
-    ::start_color();
-    ::init_pair(1, COLOR_BLUE, COLOR_BLACK);    //l
-    ::init_pair(2, COLOR_YELLOW, COLOR_BLACK);   //j
-    ::init_pair(3, COLOR_GREEN, COLOR_BLACK);//s
-    ::init_pair(4, COLOR_RED, COLOR_BLACK);  //z
-    ::init_pair(5, COLOR_MAGENTA, COLOR_BLACK);   //t
-    ::init_pair(6, COLOR_CYAN, COLOR_BLACK); //i
-    ::init_pair(7, COLOR_WHITE, COLOR_BLACK);  //o
-    bindings = {
-        {27, QUIT},//escape
-        {-1, NONE},
-        {'a', LEFT},
-        {'d', RIGHT},
-        {'s', DROP},
-        {' ', HARDDROP},
-        {'q', ROT_L},
-        {'e', ROT_R},
-        {'f', HOLD},
-        {'p', PAUSE},
-        {'r', REFRESH},
-
-    };
-}
-console::console(const std::string keybind_filename, const bool unicode, const bool reverse)
+console::console(const std::string& keybind_filename, const bool unicode, const bool reverse)
 {
     ::setlocale(LC_ALL, "");
     ::initscr();
@@ -79,7 +44,26 @@ console::console(const std::string keybind_filename, const bool unicode, const b
     ::init_pair(5, COLOR_MAGENTA, COLOR_BLACK);   //t
     ::init_pair(6, COLOR_CYAN, COLOR_BLACK); //i
     ::init_pair(7, COLOR_WHITE, COLOR_BLACK);  //o
-    bindings = {
+    attron(A_BOLD);
+    rebind(keybind_filename);
+    if(unicode) {
+        setFont({reverse,"Classic", "▫️️ ", "⏹️ ", "🔲", "━", "┃", "┓","┏", "┗", "┛"});
+
+    } else if(reverse) {
+        font.reversed =!font.reversed;
+        font.empty = "::";
+        font.ghost = "##";
+        font.block = "[]";
+    }
+
+}
+
+
+
+void console::rebind(const std::string& keybind_filename) 
+{
+    bindings.clear();
+    bindings = {//default keybinds
         {27, QUIT},//escape
         {-1, NONE},
         {'a', LEFT},
@@ -91,10 +75,6 @@ console::console(const std::string keybind_filename, const bool unicode, const b
         {'f', HOLD},
         {'p', PAUSE},
         {'r', REFRESH},
-        {KEY_DOWN, DROP},
-        {KEY_RIGHT, RIGHT},
-        {KEY_LEFT, LEFT},
-
     };
     std::ifstream file (keybind_filename);
     if(file) {
@@ -105,16 +85,6 @@ console::console(const std::string keybind_filename, const bool unicode, const b
             bindings[N] = K;
         }
     }
-    if(unicode){
-        font =  {0, "▫️️ ", "⏹️ ", "🔲", "━", "┃", "┓","┏", "┗", "┛"};
-        
-    }else if(reverse){
-        font.empty = "::";
-        font.block = "[]";
-        font.ghost = "##";
-    }
-    if(reverse)font.reversed =!font.reversed;
-    
 }
 /**
  * Destruktor konsoli
@@ -129,7 +99,7 @@ console::~console()
  * @param w szerokość pola gry
  * @param h wysokość pola gry
  */
-void console::setGameField(int w, int h)
+void console::setGameField(const int w, const int h)
 {
     gameFieldWidth = w;
     gameFieldHeight = h;
@@ -153,6 +123,7 @@ void console::clear(int x, int y, int w, int h)
     }
 }
 
+
 void console::clear_abs(int x, int y, int w, int h)
 {
     attron(COLOR_PAIR(7));
@@ -164,14 +135,11 @@ void console::clear_abs(int x, int y, int w, int h)
 }
 
 
-
-
-
-
 void console::move(int x, int y)
 {
     ::move(y+offsetY, x+offsetX);
 }
+
 
 void console::print(const std::string& s)
 {
@@ -179,20 +147,20 @@ void console::print(const std::string& s)
     printw(s.c_str());
 }
 
+
 void console::printCenter(std::string s, int y,  bool h)
 {
     attron(COLOR_PAIR(7));
     move((int)(console::width/2)-(s.length()/2), y);
-    if(h){
+    if(h) {
         print_highlight(s);
-    }else{
+    } else {
         print(s);
     }
 }
 
 
-
-void console::print_highlight(std::string s)
+void console::print_highlight(std::string& s)
 {
     attron(A_REVERSE);
     print(s);
@@ -207,16 +175,19 @@ void console::resize()
     getmaxyx(stdscr, height, width);
 //     offsetX = -width/4;
 }
+
 /**
  * Funkcja ustawia czas oczekiwania na wciśnięcie klawisza
  * @param delay czas w milisekundach
  */
-void console::setTimeout(int delay)
+
+void console::setTimeout(const int delay)
 {
     ::timeout(delay);
 }
 
-void console::wait() {
+void console::wait() const 
+{
     while(getch()>0) {}
     return;
 }
@@ -225,7 +196,7 @@ void console::wait() {
  * Funkcja zwraca klawisz wciśnięty przez użytkownika
  * @return wartość ascii znaku z klawiatury. -1 gdy minął czas oczekiwania.
  */
-key console::getInput()
+key console::getInput() 
 {
     return bindings[getch()];
 }
@@ -240,31 +211,23 @@ void console::drawTile(int x, int y, int color, bool ghost)
     if(y>0) {
         attron(COLOR_PAIR(color));
         move(x*2+(width/2)-(gameFieldWidth), y);
-        if(font.reversed){
-            if(!ghost) {
-                print_highlight(font.block);
-            } else {
-                print_highlight(font.ghost);
-            }
-            
-        }else{
-            if(!ghost) {
-                print(font.block);
-            } else {
-                print(font.ghost);
-            }
+        if(font.reversed) {
+            print_highlight(ghost? font.ghost: font.block);
+        } else {
+            print(ghost? font.ghost: font.block);
         }
     }
 }
 
-std::string centrify(std::string str, const int &w){
+std::string centrify(std::string& str, int &w) 
+{
     int rem = w-str.length();
     std::string out;
-    for(int i = 0; i < rem/2; ++i){
+    for(int i = 0; i < rem/2; ++i) {
         out += " ";
     }
     out += str;
-    while(out.length() < w){
+    while((int)out.length() < w) {
         out +=" ";
     }
     return out;
@@ -285,16 +248,16 @@ std::string console::prompt(std::string question, int limit)
     question = centrify(question, w);
     corX = (width/2)-(w/2);
     corY = height/2-3;
-    clear_abs(corX, corY, w+2, 6);
+    clear_abs(corX, corY, w+2, 5);
     move(corX, corY+1);
     print(font.corNE);
-    for(int i = 0; i<w;++i){
+    for(int i = 0; i<w; ++i) {
         print(font.hLine);
     }
     print(font.corNW);
     move(corX, corY+5);
     print(font.corSW);
-    for(int i = 0; i<w;++i){
+    for(int i = 0; i<w; ++i) {
         print(font.hLine);
     }
     print(font.corSE);
@@ -310,26 +273,26 @@ std::string console::prompt(std::string question, int limit)
     print(font.vLine);
     int q;
     bool loop = true;
-    while(loop){
+    while(loop) {
         q = ::getch();
-        if(q>0){
-            if(q=='\n'||q==27) 
+        if(q>0) {
+            if(q=='\n'||q==27)
                 loop = false;
-            else{
-                if(q==8||q==127){
-                    if(out.length()){
-                        out.pop_back(); 
+            else {
+                if(q==8||q==127) {
+                    if(out.length()) {
+                        out.pop_back();
                         //clear_abs(corX+1, corY+3, out.length()+1, 1);
                     }
-                }else if(out.length()<limit){
+                } else if((int)out.length()<limit) {
                     out+=(char)q;
                 }
-                
+
                 move(corX+1, corY+4);
                 print(centrify(out, w));
-                
-                
-                
+
+
+
             }
         }
     }
@@ -350,7 +313,7 @@ void console::drawEmpty(int x, int y, int w, int h)
     attron(COLOR_PAIR(7));
     for(int i = 0; i < h; i++) {
         for(int j = 0; j < w; j++) {
-            move( (x+j)*2+(width/2)-(gameFieldWidth), y+i); 
+            move( (x+j)*2+(width/2)-(gameFieldWidth), y+i);
             print(font.empty);
         }
     }
@@ -363,7 +326,7 @@ void console::drawEmpty(int x, int y, int w, int h)
  * @param goal Ile jeszcze brakuje do następnego poziomu
  */
 
-void console::printData(int scr, int lvl, int goal)
+void console::printData(const int scr,const int lvl,const int goal)
 {
     clear(gameFieldWidth, 1, 7, gameFieldHeight);
     attron(COLOR_PAIR(7));
@@ -372,25 +335,9 @@ void console::printData(int scr, int lvl, int goal)
     move((width/2)+gameFieldWidth+2, 2);
     print("To LvlUp:"+std::to_string(goal));
     move((width/2)+gameFieldWidth+2, 3);
-
     print("Score: "+std::to_string(scr));
-
-
-
     move((width/2)+gameFieldWidth+2, 4);
     print("Hold:");
     move((width/2)+gameFieldWidth+2, 9);
     print("Next:");
 }
-
-
-int console::getWidth()
-{
-    return width;
-}
-int console::getHeight()
-{
-    return height;
-}
-
-

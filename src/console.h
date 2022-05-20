@@ -10,6 +10,7 @@
 
 struct Font{
     bool reversed = 1;
+    std::string name = "Boxy";
     std::string empty = "[]";
     std::string ghost = "[]";
     std::string block = "  ";
@@ -39,44 +40,50 @@ enum key {
 };
 
 class console {
-    bool pressed;
     std::map<int, key> bindings;
-    int lastInput=0;
     int height;
     int width;
     int offsetX=0;
-    char ** field;
     int offsetY=-1;
     int gameFieldWidth=0;
     int gameFieldHeight=0;
     Font font;
-    
     void clear_abs(int x, int y, int w=1, int h=1);
 public:
-    
-    
-    console();
-    console(const std::string keybind_filename, const bool unicode = false, const bool reverse = false);
+    console(const std::string& keybind_filename, const bool unicode = false, const bool reverse = false);
     ~console();
     key getInput();
-    void wait();
-    void setTimeout(int delay);
-    void printData(int scr, int lvl, int goal);
+    void wait() const;
+    void rebind(const std::string& keybind_filename);
+    void setTimeout(const int delay);
+    void printData(const int scr,const int lvl, const int goal);
     void drawTile(int x, int y, int color, bool ghost=false);
     void drawEmpty(int x, int y, int w=1, int h=1);
     void clear(const int x, const int y, const int w=1, const int h=1);
     void clear();
     void resize();
     void setGameField(const int w, const int h);
-    int getWidth();
-    int getHeight();
+    void setFont(const Font &f)
+    {
+        font = f;
+    }
+    int getWidth() const noexcept
+    {
+        return width;
+    }
+    int getHeight() const noexcept 
+    {
+        return height;
+    }
     void move(const int x, const int y);
     void print(const std::string& s);
+    void print_highlight(std::string& s);
     std::string prompt(std::string question, int limit = 0);
     int prompt_key(std::string question);
     void printCenter(std::string s, int y, bool h=false);
 
-    void print_highlight(std::string s);
 };
+
+
 
 #endif // console_ASCII_H

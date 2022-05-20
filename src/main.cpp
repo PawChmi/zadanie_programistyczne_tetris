@@ -1,4 +1,4 @@
-#include "tetris.h"
+#include "engine.h"
 
 #include "menu.h"
 #include "console.h"
@@ -48,8 +48,8 @@ int main(int argc, char* argv[]) {
     if(parse_arguments(argc, argv, kb_file_name, unicode, reversed)) return 1; //exit due to help helpMessage
     console con(kb_file_name, unicode, reversed);
 
-    menu m(con);
-    std::shared_ptr<engine> game;
+    menu m(con, 2*unicode+reversed);
+    std::shared_ptr<Engine> game;
     while(true){
         game = m.result();
         if(game == nullptr){
