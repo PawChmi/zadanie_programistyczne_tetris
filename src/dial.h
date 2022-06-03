@@ -1,12 +1,12 @@
 #pragma once
 
-class dial
+class Dial
 {
     int value;
     int max;
     int min;
 public:
-    dial ( int val=0, int max=0, int min = 0 ) : value ( val ), max ( max ),  min ( min ) {};
+    Dial ( int val=0, int max=0, int min = 0 ) : value ( val ), max ( max ),  min ( min ) {};
     void turnUp()
     {
         if ( value<max ) value++;

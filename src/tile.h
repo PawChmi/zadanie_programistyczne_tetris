@@ -3,7 +3,7 @@
 
 typedef std::pair<double, double> coords;
 
-class tile {
+class Tile {
     coords Offset;
 public:
     double x(){
@@ -12,7 +12,7 @@ public:
     double y(){
         return Offset.second;
     }
-    tile(double x, double y) : Offset(x, y) {}; 
+    Tile(double x, double y) : Offset(x, y) {}; 
     void rotR(){
         double temp = -Offset.second;
         Offset.second = Offset.first;

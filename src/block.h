@@ -1,4 +1,6 @@
+
 #pragma once
+#include "tile.h"
 #include "console.h"
 
 enum blockType { //this one is just used for colors
@@ -12,16 +14,17 @@ enum blockType { //this one is just used for colors
     o = 7
 };
 
-class block
+class Block
 {
     blockType shape = n;
     bool ghost = false;
 protected:
+    std::string name;
     coords center= {0,0};
-    std::vector<tile> tiles;
+    std::vector<Tile> tiles;
 public:
-    block ( int x=0, int y=0, blockType s=n ) : shape ( s ), center ( x, y ) {};
-    ~block()
+    Block ( int x=0, int y=0, blockType s=n ) : shape ( s ), center ( x, y ) {};
+    ~Block()
     {
 
     }
@@ -46,13 +49,13 @@ public:
             t.rotR();
         }
     }
-    void draw ( console* disp ) const noexcept
+    void draw ( Console* disp ) const noexcept
     {
         for ( auto t : tiles ) {
             disp->drawTile ( center.first+t.x(), center.second+t.y(), shape, ghost );
         }
     }
-    void draw ( console* disp, const int x, const int y ) const noexcept
+    void draw ( Console* disp, const int x, const int y ) const noexcept
     {
         for ( auto t : tiles ) {
             disp->drawTile ( x+t.x(), y+t.y(), shape, ghost );
@@ -74,6 +77,9 @@ public:
     blockType getShape() const noexcept
     {
         return shape;
+    }
+    std::string getName() const noexcept {
+        return name;
     }
     int getX() const noexcept
     {

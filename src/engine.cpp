@@ -2,13 +2,14 @@
 #include <algorithm>
 #include <iterator>
 
-Engine::Engine ( console & c, int w, int h, int lvl )
+Engine::Engine ( Console & c,  std::vector<std::shared_ptr<Block>> &block_set, int w, int h, int lvl )
 {
 
-    conptr = &c;
-    conptr->setGameField ( w, h );
-    conptr->setTimeout ( 100 );
-    std::queue<std::shared_ptr<block>> empty;
+    blockSet = block_set;
+    ConsolePointer = &c;
+    ConsolePointer->setGameField ( w, h );
+    ConsolePointer->setTimeout ( 100 );
+    std::queue<std::shared_ptr<Block>> empty;
     std::swap ( blockQ, empty );
     field = new int* [h];
     width = w;
@@ -17,8 +18,8 @@ Engine::Engine ( console & c, int w, int h, int lvl )
         field[i] = new int[w];
     }
     clearField();
-    conptr->clear();
-    conptr->resize();
+    ConsolePointer->clear();
+    ConsolePointer->resize();
     level = lvl;
     goal = std::min ( 100, ( level+1 ) *4 );
     fallenUpdate = true;
@@ -34,7 +35,7 @@ Engine::~Engine()
     ghostPiece = nullptr;
     holdPiece = nullptr;
     nextPiece = nullptr;
-    conptr->setTimeout ( 250 );
+    ConsolePointer->setTimeout ( 250 );
     delete [] field;
 }
 
@@ -155,7 +156,7 @@ void Engine::RotateR()
 void Engine::ghostDrop()
 {
 
-    ghostPiece = std::make_shared<block> ( *activePiece );
+    ghostPiece = std::make_shared<Block> ( *activePiece );
     ghostPiece->makeGhost();
     while ( !collisionCheck ( *ghostPiece ) ) {
         ghostPiece->move ( 0, 1 );
@@ -195,8 +196,8 @@ bool Engine::fallen()
  */
 void Engine::drawPiece()
 {
-    ghostPiece->draw ( conptr );
-    activePiece->draw ( conptr );
+    ghostPiece->draw ( ConsolePointer );
+    activePiece->draw ( ConsolePointer );
 }
 
 
@@ -208,20 +209,20 @@ bool Engine::work()
     }
     drawField();
     drawPiece();
-    key ch = conptr->getInput();
+    key ch = ConsolePointer->getInput();
     if ( ch ==QUIT ) {
         GiveUp();
     } else if ( ch==LEFT ) {
         Left();
     } else if ( ch==PAUSE ) {
         bool pauseloop = true;
-        conptr->move ( conptr->getWidth() /2-3, 10 );
-        conptr->printCenter ( "        ", height/2-1, true );
-        conptr->printCenter ( " PAUSED ", height/2, true );
-        conptr->printCenter ( "        ", height/2+1, true );
+        ConsolePointer->move ( ConsolePointer->getWidth() /2-3, 10 );
+        ConsolePointer->printCenter ( "        ", height/2-1, true );
+        ConsolePointer->printCenter ( " PAUSED ", height/2, true );
+        ConsolePointer->printCenter ( "        ", height/2+1, true );
         while ( pauseloop ) {
 
-            ch = conptr->getInput();
+            ch = ConsolePointer->getInput();
             if ( ch==PAUSE ) pauseloop = false;
         }
     } else if ( ch==HARDDROP ) {
@@ -231,8 +232,8 @@ bool Engine::work()
     } else if ( ch==RIGHT ) {
         Right();
     } else if ( ch==REFRESH ) {
-        conptr->clear();
-        conptr->resize();
+        ConsolePointer->clear();
+        ConsolePointer->resize();
     } else if ( ch==HOLD ) {
         Hold();
         drawSide();
@@ -250,19 +251,19 @@ bool Engine::work()
 
 void Engine::drawSide()
 {
-    conptr->printData ( score, level, goal );
-    if ( holdPiece!=nullptr ) holdPiece->draw ( conptr, width+3, 6 );
+    ConsolePointer->printData ( score, level, goal );
+    if ( holdPiece!=nullptr ) holdPiece->draw ( ConsolePointer, width+3, 6 );
 
-    nextPiece->draw ( conptr, width+3, 12 );
+    nextPiece->draw ( ConsolePointer, width+3, 12 );
 }
 
 void Engine::Hold()
 {
     if ( !held ) {
         held = true;
-        std::shared_ptr<block> temp = holdPiece;
-        holdPiece= std::make_shared<block> ( *activePiece );
-        if ( temp!=nullptr ) activePiece = std::make_shared<block> ( *temp );
+        std::shared_ptr<Block> temp = holdPiece;
+        holdPiece= std::make_shared<Block> ( *activePiece );
+        if ( temp!=nullptr ) activePiece = std::make_shared<Block> ( *temp );
         else spawn();
     }
     ghostDrop();
@@ -281,6 +282,11 @@ void Engine::scoreIncrease ( int n )
 
 void Engine::shuffle()
 {
+        std::shuffle ( std::begin ( blockSet ), std::end ( blockSet ), std::default_random_engine ( time ( NULL ) ) );
+        for ( auto b : blockSet ) {
+            blockQ.push ( b );
+        }
+    
 }
 
 
@@ -305,17 +311,14 @@ void Engine::spawn()
 {
     //  activePiece = nullptr;
     if ( blockQ.size() <2 ) shuffle();
-    if ( nextPiece != nullptr ) {
-        activePiece = std::make_shared<block> ( *nextPiece );
-    } else {
-        activePiece = blockQ.front();
+    if ( nextPiece == nullptr ) {
+        nextPiece = blockQ.front();
         blockQ.pop();
     }
+    activePiece = std::make_shared<Block> ( *nextPiece );
     nextPiece = blockQ.front();
 
     blockQ.pop();
-    ghostDrop();
-
 }
 /**
  * Funckcja ustawia komórkę tablicy na podaną wartość
@@ -336,9 +339,9 @@ void Engine::drawField()
     for ( int y = 1; y<height; y++ ) {
         for ( int x = 0; x<width; x++ ) {
             if ( field[y][x] ) {
-                conptr->drawTile ( x,y,field[y][x] );
+                ConsolePointer->drawTile ( x,y,field[y][x] );
             } else {
-                conptr->drawEmpty ( x,y );
+                ConsolePointer->drawEmpty ( x,y );
             }
         }
     }
@@ -379,12 +382,12 @@ void Engine::clearLine ( int y )
 {
     drawField();
     for ( int x =0; x<width; x++ ) {
-        conptr->drawTile ( x, y, field[y][x], true );
+        ConsolePointer->drawTile ( x, y, field[y][x], true );
     }
-    conptr->wait();
-    conptr->printData ( score, level, goal );
-    conptr->drawEmpty ( 0, y, width );
-    conptr->wait();
+    ConsolePointer->wait();
+    ConsolePointer->printData ( score, level, goal );
+    ConsolePointer->drawEmpty ( 0, y, width );
+    ConsolePointer->wait();
 
     while ( y>1 ) { //kopiuj zawartość linijki nad y do y, powtarzaj aż dojdziesz do ostatniej linijki
         std::copy ( field[y-1], field[y-1]+width, field[y] );
@@ -396,7 +399,7 @@ void Engine::clearLine ( int y )
  * Funkcja sprawdza czy blok wyszedł poza ramy pola gry lub nachodzi na zajęte już komórki
  * @return true jeśli nastąpiła kolizja, w przeciwnym razie false
  */
-bool Engine::collisionCheck ( block &b )
+bool Engine::collisionCheck ( Block &b )
 {
     std::vector<std::pair<int, int>> t;
     t = b.getTileCoords();

@@ -1,19 +1,70 @@
 #pragma once
 #include "console.h"
-#include "gamemodes.h"
+#include "upsidedown.h"
+#include "shaky.h"
+#include "classic.h"
 #include "dial.h"
 #include <vector>
 #include <map>
 #include <fstream>
 #include <sstream>
 
-class menu
+class Menu
 {
-    dial choice, gamemode, lvl, width, height, theme;
-    console * conptr;
-    int animation_frame;
+    Dial choice, gamemode, lvl, width, height, theme, block_set;
+    Console * conptr;
+    int animation_frame=0;
     const int colors[6] = {4, 2, 3, 6,  1, 5};
     std::map<int, std::string> scores;
+    const std::vector< std::vector<std::shared_ptr<Block>>> blockSets = {
+        {
+            std::make_shared<block_J> ( ),
+            std::make_shared<block_I> ( ),
+            std::make_shared<block_O> ( ),
+            std::make_shared<block_L> ( ),
+            std::make_shared<block_S> ( ),
+            std::make_shared<block_Z> ( ),
+            std::make_shared<block_T> ( ),  
+        },{
+            std::make_shared<block_A> ( ),  
+            std::make_shared<block_B> ( ),  
+            std::make_shared<block_C> ( ),  
+            std::make_shared<block_D> ( ),  
+            std::make_shared<block_E> ( ),  
+            std::make_shared<block_F> ( ),  
+            std::make_shared<block_G> ( ), 
+            std::make_shared<block_H> ( ), 
+            std::make_shared<block_I> ( ), 
+            std::make_shared<block_J> ( ), 
+            std::make_shared<block_K> ( ), 
+            std::make_shared<block_L> ( ), 
+            std::make_shared<block_M> ( ), 
+            std::make_shared<block_N> ( ), 
+            std::make_shared<block_O> ( ), 
+            std::make_shared<block_P> ( ), 
+            std::make_shared<block_Q> ( ), 
+            std::make_shared<block_R> ( ), 
+            std::make_shared<block_S> ( ), 
+            std::make_shared<block_T> ( ), 
+            std::make_shared<block_U> ( ), 
+            std::make_shared<block_V> ( ), 
+            std::make_shared<block_W> ( ), 
+            std::make_shared<block_X> ( ), 
+            std::make_shared<block_Y> ( ), 
+            std::make_shared<block_Z> ( ), 
+        },{
+            std::make_shared<block_T> ( ),  
+        },{
+            std::make_shared<block_dot> ( 0,0, j),
+            std::make_shared<block_dot> ( 0,0, t),
+            std::make_shared<block_dot> ( 0,0, l),
+            std::make_shared<block_dot> ( 0,0, o),
+            std::make_shared<block_dot> ( 0,0, i),
+            std::make_shared<block_dot> ( 0,0, s),
+            std::make_shared<block_dot> ( 0,0, z),
+            
+        }
+    };
     std::vector<Font> fonts = {
         {1,"Boxy", "[]", "[]", "  ", "-", "|", "+","+", "+", "+"},
         {0,"Thin", "::", "##", "[]", "-", "|", "+","+", "+", "+"},
@@ -32,32 +83,38 @@ class menu
     void draw()
     {
         conptr->clear();
+        conptr->setGameField(0, 10);
         for ( int i = 0; i<(int)logo.size(); ++i ) {
             std::vector<int> l = logo[i];
-            int t = l[2]+ ( ( animation_frame ) %6 );
-            if ( t>5 ) t -= 6;
-            conptr->drawTile ( l[0], l[1]+1- ( l[2]+1==animation_frame%8 ), colors[t] );
+            
+            conptr->drawTile ( l[0], l[1]+2- ( l[2]+1==animation_frame%8 ), colors[l[2]] );
         }
-        int line = 8;
+        int line = 9;
         switch ( gamemode ) {
         case 0:
             conptr->printCenter ( "Gamemode: Classic", line++, ( choice== 0 ) );
             break;
         case 1:
-            conptr->printCenter ( "Gamemode: Justice", line++, ( choice == 0 ) );
+            conptr->printCenter ( "Gamemode: UpsideDown ", line++, ( choice== 0 ) );
             break;
         case 2:
-            conptr->printCenter ( "Gamemode: Ludicrous", line++, ( choice== 0 ) );
+            conptr->printCenter ( "Gamemode: Shaky ", line++, ( choice== 0 ) );
             break;
         }
-
-        conptr->printCenter ( "LVL:"+std::to_string ( lvl ), line++, ( choice== 1 ) );
-        conptr->printCenter ( "Width:"+std::to_string ( width ), line++, ( choice== 2 ) );
-        conptr->printCenter ( "Height:"+std::to_string ( height ), line++, ( choice== 3 ) );
-        conptr->printCenter ( "Theme: "+fonts[theme].name, line++, ( choice== 4 ) );
+        std::string s((int)blockSets[block_set].size(), ' ');
+        conptr->printCenter ( "Block Set: "+ s, line, ( choice== 1 ) );
+        
+        conptr->move(conptr->getX()-(int)blockSets[block_set].size(), line++);
+        for(auto B : blockSets[block_set]){
+            conptr->print(B->getName(), (int)B->getShape());
+        }
+        conptr->printCenter ( "LVL:"+std::to_string ( lvl ), line++, ( choice== 2 ) );
+        conptr->printCenter ( "Width:"+std::to_string ( width ), line++, ( choice== 3 ) );
+        conptr->printCenter ( "Height:"+std::to_string ( height ), line++, ( choice== 4 ) );
+        conptr->printCenter ( "Theme: "+fonts[theme].name, line++, ( choice== 5 ) );
         
 
-        conptr->printCenter ( "Controls", line++, ( choice== 5 ) );
+        conptr->printCenter ( "Controls", line++, ( choice== 6 ) );
         ++line;
         conptr->printCenter ( "HIGH SCORES", line++ );
         for ( auto el : scores ) {
@@ -115,15 +172,18 @@ public:
                     gamemode++;
                     break;
                 case 1:
-                    lvl++;
+                    block_set++;
                     break;
                 case 2:
-                    width++;
+                    lvl++;
                     break;
                 case 3:
-                    height++;
+                    width++;
                     break;
                 case 4:
+                    height++;
+                    break;
+                case 5:
                     theme++;
                     conptr->setFont(fonts[theme]);
                     break;
@@ -134,15 +194,18 @@ public:
                     gamemode--;
                     break;
                 case 1:
-                    lvl--;
+                    block_set--;
                     break;
                 case 2:
-                    width--;
+                    lvl--;
                     break;
                 case 3:
-                    height--;
+                    width--;
                     break;
                 case 4:
+                    height--;
+                    break;
+                case 5:
                     theme--;
                     conptr->setFont(fonts[theme]);
                     break;
@@ -152,13 +215,13 @@ public:
 
                     switch ( gamemode ) {
                     case 0:
-                        return std::make_shared<classic> ( *conptr, width, height, lvl );
+                        return std::make_shared<Classic> ( *conptr, blockSets[block_set], width, height, lvl  );
                         break;
                     case 1:
-                        return std::make_shared<justice> ( *conptr, width, height, lvl );
+                        return std::make_shared<UpsideDown> ( *conptr, blockSets[block_set], width, height, lvl );
                         break;
                     case 2:
-                        return std::make_shared<ludicrous> ( *conptr, width, height, lvl );
+                        return std::make_shared<Shaky> ( *conptr, blockSets[block_set], width, height, lvl );
                         break;
                     }
                 } else if ( choice==5 ) {
@@ -171,16 +234,22 @@ public:
         }
         return nullptr;
     }
-    menu ( console & c, const int thm )
+    Menu ( Console & c, const int thm )
     {
         conptr = &c;
-        choice = {0, 5};
-        theme = {thm, (int)fonts.size()-1, 0};
+        choice = {0, 6};
+
+        theme = {((thm<(int)fonts.size())?thm:0), (int)fonts.size()-1, 0};
+        block_set = {0, (int)blockSets.size()-1, 0};
+        
+        conptr->setFont(fonts[theme]);
+        
         lvl = {1, 100, 1};
         height = {20, 100, 10};
-        width = {10, conptr->getWidth() /2-1, 6};
+        width = {10, conptr->getWidth() /2-20, 6};
         gamemode = {0, 2};
         conptr->setTimeout ( 250 );
+
         std::ifstream scr_file ( "scores.dat" );
         if ( scr_file ) {
             std::string tmp;
@@ -189,13 +258,14 @@ public:
                 std::string name;
                 std::stringstream ss ( tmp );
                 ss >> s;
-                getline ( ss, scores[-s] );
+                getline ( ss, name );
+                scores[-s] = name.substr(1);
             }
 
         }
         scr_file.close();
     }
-    ~menu()
+    ~Menu()
     {
         std::ofstream scr_file ( "scores.dat" );
         if ( scr_file ) {

@@ -23,7 +23,7 @@ std::istream& operator >> (std::istream& i, key& K)
     return i;
 }
 
-console::console(const std::string& keybind_filename, const bool unicode, const bool reverse)
+Console::Console(const std::string& keybind_filename)
 {
     ::setlocale(LC_ALL, "");
     ::initscr();
@@ -46,21 +46,11 @@ console::console(const std::string& keybind_filename, const bool unicode, const 
     ::init_pair(7, COLOR_WHITE, COLOR_BLACK);  //o
     attron(A_BOLD);
     rebind(keybind_filename);
-    if(unicode) {
-        setFont({reverse,"Classic", "▫️️ ", "⏹️ ", "🔲", "━", "┃", "┓","┏", "┗", "┛"});
-
-    } else if(reverse) {
-        font.reversed =!font.reversed;
-        font.empty = "::";
-        font.ghost = "##";
-        font.block = "[]";
-    }
-
 }
 
 
 
-void console::rebind(const std::string& keybind_filename) 
+void Console::rebind(const std::string& keybind_filename) 
 {
     bindings.clear();
     bindings = {//default keybinds
@@ -89,7 +79,7 @@ void console::rebind(const std::string& keybind_filename)
 /**
  * Destruktor konsoli
  */
-console::~console()
+Console::~Console()
 {
     ::endwin();
 }
@@ -99,7 +89,7 @@ console::~console()
  * @param w szerokość pola gry
  * @param h wysokość pola gry
  */
-void console::setGameField(const int w, const int h)
+void Console::setGameField(const int w, const int h)
 {
     gameFieldWidth = w;
     gameFieldHeight = h;
@@ -108,12 +98,12 @@ void console::setGameField(const int w, const int h)
 /**
  * Funkcja czyści wyświetlany ekran
  */
-void console::clear()
+void Console::clear()
 {
     ::clear();
 }
 
-void console::clear(int x, int y, int w, int h)
+void Console::clear(int x, int y, int w, int h)
 {
     attron(COLOR_PAIR(7));
     for(int i = 0; i < h; i++) {
@@ -124,7 +114,7 @@ void console::clear(int x, int y, int w, int h)
 }
 
 
-void console::clear_abs(int x, int y, int w, int h)
+void Console::clear_abs(int x, int y, int w, int h)
 {
     attron(COLOR_PAIR(7));
     for(int i = 0; i < h; i++) {
@@ -135,23 +125,33 @@ void console::clear_abs(int x, int y, int w, int h)
 }
 
 
-void console::move(int x, int y)
+void Console::move(int x, int y)
 {
     ::move(y+offsetY, x+offsetX);
 }
 
-
-void console::print(const std::string& s)
+int Console::getX(){
+    int x, y;
+    getyx(stdscr, y, x);
+    return x;
+}
+void Console::print(const std::string& s)
 {
 
     printw(s.c_str());
 }
+void Console::print(const std::string& s, const short int c)
+{
+    attron(COLOR_PAIR(c));
+    printw(s.c_str());
+    attroff(COLOR_PAIR(c));
+}
 
 
-void console::printCenter(std::string s, int y,  bool h)
+void Console::printCenter(std::string s, int y,  bool h)
 {
     attron(COLOR_PAIR(7));
-    move((int)(console::width/2)-(s.length()/2), y);
+    move((int)(Console::width/2)-(s.length()/2), y);
     if(h) {
         print_highlight(s);
     } else {
@@ -160,7 +160,7 @@ void console::printCenter(std::string s, int y,  bool h)
 }
 
 
-void console::print_highlight(std::string& s)
+void Console::print_highlight(std::string& s)
 {
     attron(A_REVERSE);
     print(s);
@@ -170,7 +170,7 @@ void console::print_highlight(std::string& s)
 /**
  * Funkcja sprawdza wymiary wyświetlacza i zapisuje je do zmiennych width i height obiektu
  */
-void console::resize()
+void Console::resize()
 {
     getmaxyx(stdscr, height, width);
 //     offsetX = -width/4;
@@ -181,12 +181,12 @@ void console::resize()
  * @param delay czas w milisekundach
  */
 
-void console::setTimeout(const int delay)
+void Console::setTimeout(const int delay)
 {
     ::timeout(delay);
 }
 
-void console::wait() const 
+void Console::wait() const 
 {
     while(getch()>0) {}
     return;
@@ -196,7 +196,7 @@ void console::wait() const
  * Funkcja zwraca klawisz wciśnięty przez użytkownika
  * @return wartość ascii znaku z klawiatury. -1 gdy minął czas oczekiwania.
  */
-key console::getInput() 
+key Console::getInput() 
 {
     return bindings[getch()];
 }
@@ -206,9 +206,9 @@ key console::getInput()
  * @param y współrzędna y w polu gry
  * @param color wartość od 1-7 oznaczająca kolor kafelka
  */
-void console::drawTile(int x, int y, int color, bool ghost)
+void Console::drawTile(int x, int y, int color, bool ghost)
 {
-    if(y>0) {
+    if(y>0 and y<gameFieldHeight) {
         attron(COLOR_PAIR(color));
         move(x*2+(width/2)-(gameFieldWidth), y);
         if(font.reversed) {
@@ -233,12 +233,12 @@ std::string centrify(std::string& str, int &w)
     return out;
 }
 
-int console::prompt_key(std::string question)
+int Console::prompt_key(std::string question)
 {
     return (int) prompt(question, 1)[0];
 }
 
-std::string console::prompt(std::string question, int limit)
+std::string Console::prompt(std::string question, int limit)
 {
     attron(COLOR_PAIR(7));
     std::string out;
@@ -308,7 +308,7 @@ std::string console::prompt(std::string question, int limit)
  * @param w szerokość prostokąta
  * @param h wysokość prostokąta
  */
-void console::drawEmpty(int x, int y, int w, int h)
+void Console::drawEmpty(int x, int y, int w, int h)
 {
     attron(COLOR_PAIR(7));
     for(int i = 0; i < h; i++) {
@@ -326,7 +326,7 @@ void console::drawEmpty(int x, int y, int w, int h)
  * @param goal Ile jeszcze brakuje do następnego poziomu
  */
 
-void console::printData(const int scr,const int lvl,const int goal)
+void Console::printData(const int scr,const int lvl,const int goal)
 {
     clear(gameFieldWidth, 1, 7, gameFieldHeight);
     attron(COLOR_PAIR(7));

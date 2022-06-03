@@ -8,9 +8,8 @@
 #include <algorithm>
 #include <random>
 #include "console.h"
-#include "tile.h"
-#include "block.h"
 #include "block_shapes.h"
+#include "alphabet.h"
 
 
 
@@ -26,33 +25,34 @@ protected:
     int score=0;
     int clock=0;
     int goal = 0;
-    std::queue<std::shared_ptr<block>> blockQ;
+    std::vector<std::shared_ptr<Block>> blockSet;
+    std::queue<std::shared_ptr<Block>> blockQ;
     bool fallenUpdate=false;
     bool held=false;
     int ** field;
-    std::shared_ptr<block> activePiece;
-    std::shared_ptr<block>  nextPiece=nullptr;
-    std::shared_ptr<block> ghostPiece;
-    std::shared_ptr<block>  holdPiece=nullptr;
-    console * conptr;
+    std::shared_ptr<Block> activePiece;
+    std::shared_ptr<Block>  nextPiece=nullptr;
+    std::shared_ptr<Block> ghostPiece;
+    std::shared_ptr<Block>  holdPiece=nullptr;
+    Console * ConsolePointer;
     int scanLine ( int y );
-    bool collisionCheck ( block &b );
-    void petrify();
-    void clearLine ( int y );
+    virtual bool collisionCheck ( Block &b );
+    virtual void petrify();
+    virtual void clearLine ( int y );
     void scanLines();
-    virtual void shuffle();
+    void shuffle();
     void scoreIncrease ( int n );
     void clearField();
     void setField ( const int x, const int y, const int val );
-    void gravity();
-    void ghostDrop();
+    virtual void gravity();
+    virtual void ghostDrop();
     void drawField();
-    void spawn();
+    virtual void spawn();
     void Left();
     void Right();
     void incrementClock ( int ammount=DEFAULT_TIME_ADDED );
-    void SoftDrop();
-    void HardDrop();
+    virtual void SoftDrop();
+    virtual void HardDrop();
     void RotateL();
     void RotateR();
     void Hold();
@@ -69,7 +69,7 @@ public:
     {
         return score;
     }
-    Engine ( console & c, int w=10, int h=20, int lvl = 1 );
+    Engine ( Console & c,  std::vector<std::shared_ptr<Block>> &blockSet, int w=10, int h=20, int lvl = 1 );
     virtual ~Engine();
 
 };

@@ -9,17 +9,17 @@
 
 
 struct Font{
-    bool reversed = 1;
-    std::string name = "Boxy";
-    std::string empty = "[]";
-    std::string ghost = "[]";
-    std::string block = "  ";
-    std::string hLine = "-";
-    std::string vLine = "|";
-    std::string corNW = "+";
-    std::string corNE = "+";
-    std::string corSW = "+";
-    std::string corSE = "+";
+    bool reversed;
+    std::string name;
+    std::string empty;
+    std::string ghost;
+    std::string block;
+    std::string hLine;
+    std::string vLine; 
+    std::string corNW;
+    std::string corNE;
+    std::string corSW;
+    std::string corSE;
 
 };
 
@@ -39,19 +39,19 @@ enum key {
     
 };
 
-class console {
+class Console {
     std::map<int, key> bindings;
     int height;
     int width;
     int offsetX=0;
     int offsetY=-1;
     int gameFieldWidth=0;
-    int gameFieldHeight=0;
+    int gameFieldHeight=10;
     Font font;
     void clear_abs(int x, int y, int w=1, int h=1);
 public:
-    console(const std::string& keybind_filename, const bool unicode = false, const bool reverse = false);
-    ~console();
+    Console(const std::string& keybind_filename);
+    ~Console();
     key getInput();
     void wait() const;
     void rebind(const std::string& keybind_filename);
@@ -75,8 +75,10 @@ public:
     {
         return height;
     }
+    int getX();
     void move(const int x, const int y);
     void print(const std::string& s);
+    void print(const std::string& s, const short int c);
     void print_highlight(std::string& s);
     std::string prompt(std::string question, int limit = 0);
     int prompt_key(std::string question);
