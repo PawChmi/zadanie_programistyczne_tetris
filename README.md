@@ -9,14 +9,11 @@ Na systemie Windows należy wskazać ścieżkę do kompilatora oraz rodzaj gener
 
 
 ## Uruchomienie programu:
-`./tetris`
+Plik wykonywalny `tetris` uruchamiamy w konsoli poleceń
 
 ```
-This is a console based tetris game
-
-OPTIONS:
- -k <filename> to use custom key binds specified in a file
- -h 	 display this help message
- -r 	 reverse the color theme (only applies to block and ghost block)
- -u 	 use unicode characters
+OPCJE:
+ -k <nazwa_pliku> użyj zestawu klawiszy zapisanych w pliku
+ -h 	 wyświetl tą wiadomość pomocy
+ -t <0-4>  wybierz motyw od 0 do 4
 ```
