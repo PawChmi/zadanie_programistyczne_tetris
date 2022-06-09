@@ -2,6 +2,9 @@
 Program wykorzystuje bibliotekę curses.
 Kompilowanie z cmake:
 `cmake . && make`
+Na systemie Windows należy wskazać ścieżkę do kompilatora oraz rodzaj generatora
+(domyślnie powinien to być MSVC)
+`cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -G "MinGW Makefiles" .`
 Uruchomienie programu:
 `./tetris`
 
