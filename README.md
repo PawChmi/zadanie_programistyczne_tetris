@@ -1,11 +1,14 @@
 # Zadanie Programistyczne: Tetris
-Program wykorzystuje bibliotekę curses.
-Kompilowanie z cmake:
+Program wykorzystuje bibliotekę [ncurses](https://github.com/mirror/ncurses) (licencja MIT) na linuxie, oraz [pdcurses](https://github.com/wmcbrine/PDCurses)  (Public Domain) na windowsie. 
+
+## Kompilowanie z cmake:
 `cmake . && make`
 Na systemie Windows należy wskazać ścieżkę do kompilatora oraz rodzaj generatora
-(domyślnie powinien to być MSVC)
+(domyślnie powinien to być MSVC)<br>
 `cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -G "MinGW Makefiles" .`
-Uruchomienie programu:
+
+
+## Uruchomienie programu:
 `./tetris`
 
 ```
