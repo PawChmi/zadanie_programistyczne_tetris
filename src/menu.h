@@ -1,19 +1,21 @@
 #pragma once
 #include "console.h"
 #include "upsidedown.h"
-#include "shaky.h"
+#include "shakey.h"
+#include "infection.h"
 #include "classic.h"
 #include "dial.h"
 #include <vector>
 #include <map>
 #include <fstream>
 #include <sstream>
+#include <exception>
 
 class Menu
 {
     Dial choice, gamemode, lvl, width, height, theme, block_set;
     Console * conptr;
-    int animation_frame=0;
+    size_t animation_frame=0;
     const int colors[6] = {4, 2, 3, 6,  1, 5};
     std::map<int, std::string> scores;
     const std::vector< std::vector<std::shared_ptr<Block>>> blockSets = {
@@ -80,15 +82,41 @@ class Menu
         /*I*/    {5,1,4},{5,3,4},{5,4,4},{5,5,4},
         /*S*/    {8,1,5},{9,1,5},{10,1,5},{8,2,5},{8,3,5},{9,3,5},{10,3,5},{10,4,5},{8,5,5},{9,5,5},{10,5,5}
     };
+    void drawLogo(){
+        switch(gamemode){
+            case 3:
+                for ( int i = 0; i<(int)logo.size(); ++i ) {
+                    std::vector<int> l = logo[i];
+                    int a = animation_frame%20/2-2;
+                    conptr->drawTile ( l[0], l[1]+2, colors[1-(a<l[2])+(a>l[2])] );
+                }
+                break;
+            case 1:
+            for ( int i = 0; i<(int)logo.size(); ++i ) {
+                std::vector<int> l = logo[i];
+                conptr->drawTile ( l[0], 5-l[1]+2+( l[2]+1==animation_frame%8 ), colors[l[2]] );
+            }
+            break;
+            case 2:
+            for ( int i = 0; i<(int)logo.size(); ++i ) {
+                std::vector<int> l = logo[i];
+                conptr->drawTile ( l[0]+( l[2]+1==animation_frame%8 ), l[1]+2, colors[l[2]] );
+            }
+                break;
+            default:
+                for ( int i = 0; i<(int)logo.size(); ++i ) {
+                    std::vector<int> l = logo[i];
+                    conptr->drawTile ( l[0], l[1]+2-( l[2]+1==animation_frame%8 ), colors[l[2]] );
+                }
+                break;
+        }
+    }
+    
     void draw()
     {
         conptr->clear();
         conptr->setGameField(0, 10);
-        for ( int i = 0; i<(int)logo.size(); ++i ) {
-            std::vector<int> l = logo[i];
-            
-            conptr->drawTile ( l[0], l[1]+2- ( l[2]+1==animation_frame%8 ), colors[l[2]] );
-        }
+        drawLogo();
         int line = 9;
         switch ( gamemode ) {
         case 0:
@@ -98,7 +126,10 @@ class Menu
             conptr->printCenter ( "Gamemode: UpsideDown ", line++, ( choice== 0 ) );
             break;
         case 2:
-            conptr->printCenter ( "Gamemode: Shaky ", line++, ( choice== 0 ) );
+            conptr->printCenter ( "Gamemode: Shakey ", line++, ( choice== 0 ) );
+            break;
+        case 3:
+            conptr->printCenter ( "Gamemode: Infection ", line++, ( choice== 0 ) );
             break;
         }
         std::string s((int)blockSets[block_set].size(), ' ');
@@ -116,6 +147,9 @@ class Menu
 
         conptr->printCenter ( "Controls", line++, ( choice== 6 ) );
         ++line;
+        if(choice!=6)conptr->printCenter ( "Press <HARDDROP> to start", line++, true);
+        else conptr->printCenter ( "Press <HARDDROP> to configure key binds", line++, true);
+        
         conptr->printCenter ( "HIGH SCORES", line++ );
         for ( auto el : scores ) {
             if ( line < conptr->getHeight() )
@@ -211,7 +245,10 @@ public:
                     break;
                 }
             } else if ( ch == HARDDROP ) {
-                if ( !choice ) {
+                if ( choice==6 ) {
+                    configureKeyBinds();
+                }
+                else{
 
                     switch ( gamemode ) {
                     case 0:
@@ -221,12 +258,13 @@ public:
                         return std::make_shared<UpsideDown> ( *conptr, blockSets[block_set], width, height, lvl );
                         break;
                     case 2:
-                        return std::make_shared<Shaky> ( *conptr, blockSets[block_set], width, height, lvl );
+                        return std::make_shared<Shakey> ( *conptr, blockSets[block_set], width, height, lvl );
+                        break;
+                    case 3:
+                        return std::make_shared<Infection> ( *conptr, blockSets[block_set], width, height, lvl );
                         break;
                     }
-                } else if ( choice==5 ) {
-                    configureKeyBinds();
-                }
+                } 
 
             } else if ( ch==NONE ) {
                 animation_frame++;
@@ -247,30 +285,40 @@ public:
         lvl = {1, 100, 1};
         height = {20, 100, 10};
         width = {10, conptr->getWidth() /2-20, 6};
-        gamemode = {0, 2};
+        gamemode = {0, 3};
         conptr->setTimeout ( 250 );
-
         std::ifstream scr_file ( "scores.dat" );
-        if ( scr_file ) {
+        try{
+        LoadScores(scr_file);
+        }catch(...){
+            scores.clear();
+            scores[1]="ERROR LOADING SCORES";
+            scores[2]="Please inspect \"scores.dat\" file";
+        }
+
+    }
+    void LoadScores(std::ifstream &file){
+        
+        if ( file ) {
             std::string tmp;
-            while ( getline ( scr_file, tmp ) ) {
-                int s;
+            while ( getline ( file, tmp ) ) {
+                int score;
                 std::string name;
                 std::stringstream ss ( tmp );
-                ss >> s;
+                ss >> score;
                 getline ( ss, name );
-                scores[-s] = name.substr(1);
+                this->scores[-score] = name.substr(1);
             }
-
         }
-        scr_file.close();
+        file.close();
+        
     }
-    ~Menu()
+    ~Menu() noexcept
     {
         std::ofstream scr_file ( "scores.dat" );
         if ( scr_file ) {
             for ( auto el:scores ) {
-                scr_file << -el.first << " " << el.second <<std::endl;
+                if(el.first<=0)scr_file << -el.first << " " << el.second <<std::endl;
             }
         }
         scr_file.close();

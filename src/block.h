@@ -74,6 +74,9 @@ public:
 
         return output;
     }
+    void setShape(const blockType shape){
+        this->shape = shape;
+    }
     blockType getShape() const noexcept
     {
         return shape;
