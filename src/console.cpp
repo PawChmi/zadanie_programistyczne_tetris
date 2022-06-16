@@ -46,6 +46,7 @@ Console::Console(const std::string& keybind_filename)
     ::init_pair(7, COLOR_WHITE, COLOR_BLACK);  //o
     attron(A_BOLD);
     rebind(keybind_filename);
+    ::endwin();
 }
 
 
@@ -72,7 +73,7 @@ void Console::rebind(const std::string& keybind_filename)
         int N;
 
         while(file >> K>>N) {
-            bindings[N] = K;
+            bindings[N] = K;   
         }
     }
 }

@@ -11,6 +11,48 @@
 #include <sstream>
 #include <exception>
 
+std::ostream& operator << ( std::ostream& o, const key& K )
+{
+    switch ( K ) {
+    case LEFT:
+        o << "left";
+        break;
+    case RIGHT:
+        o << "right";
+        break;
+    case DROP:
+        o << "drop";
+        break;
+    case HARDDROP:
+        o << "harddrop";
+        break;
+    case HOLD:
+        o << "hold";
+        break;
+    case ROT_L:
+        o << "rotate_left";
+        break;
+    case ROT_R:
+        o << "rotate_right";
+        break;
+    case PAUSE:
+        o << "pause";
+        break;
+    case REFRESH:
+        o << "pause";
+        break;
+    case QUIT:
+        o << "pause";
+        break;
+    default:
+        o << "unknown";
+    };
+    return o;
+}
+
+
+
+
 class Menu
 {
     Dial choice, gamemode, lvl, width, height, theme, block_set;
@@ -163,7 +205,7 @@ class Menu
     void configureKeyBinds()
     {
         std::map<int, key> bindings;
-
+        
         bindings[conptr->prompt_key ( "     left       " )] = LEFT;
         bindings[conptr->prompt_key ( "     right      " )] = RIGHT;
         bindings[conptr->prompt_key ( "   soft drop    " )] = DROP;
@@ -175,11 +217,7 @@ class Menu
         std::ofstream kb_file ( kb_file_name );
         if ( kb_file ) {
             for ( auto k : bindings ) {
-                kb_file << k.second << " ";
-                if ( k.first > 5 )
-                    kb_file << k.first ;
-                else
-                    kb_file << k.first+400;
+                kb_file << (key)k.second << " "<<k.first+256*( k.first <= 5 );
                 kb_file<<std::endl;
 
             }
@@ -332,43 +370,4 @@ public:
     }
 };
 
-
-std::ostream& operator << ( std::ostream& o, const key& K )
-{
-    switch ( K ) {
-    case LEFT:
-        o << "left";
-        break;
-    case RIGHT:
-        o << "right";
-        break;
-    case DROP:
-        o << "drop";
-        break;
-    case HARDDROP:
-        o << "harddrop";
-        break;
-    case HOLD:
-        o << "hold";
-        break;
-    case ROT_L:
-        o << "rotate_left";
-        break;
-    case ROT_R:
-        o << "rotate_right";
-        break;
-    case PAUSE:
-        o << "pause";
-        break;
-    case REFRESH:
-        o << "pause";
-        break;
-    case QUIT:
-        o << "pause";
-        break;
-    default:
-        o << "unknown";
-    };
-    return o;
-}
 
