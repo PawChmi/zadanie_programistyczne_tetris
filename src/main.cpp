@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
             while(game->work()) {
                 //absolutely nothing has to happen here, it's just a loop.
             }
-            menu.record(game->getScore(), con.prompt(" What is your name?  ", 10));
+            menu.record(game->getScore(), con.prompt(" What is your name?  ", 10),game->getMode());
         
             con.clear();
             

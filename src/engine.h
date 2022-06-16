@@ -65,6 +65,7 @@ protected:
     }
 public:
     bool work();
+    virtual std::string getMode();
     int getScore() const noexcept
     {
         return score;

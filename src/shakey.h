@@ -55,7 +55,7 @@ protected:
         ghostDrop();
     }
 public:
-        Shakey (  Console &c, std::vector<std::shared_ptr<Block>> blockSet, int w=10, int h = 20, int lvl=1 ) : Engine ( c, blockSet, w, h, lvl )
+    Shakey (  Console &c, std::vector<std::shared_ptr<Block>> blockSet, int w=10, int h = 20, int lvl=1 ) : Engine ( c, blockSet, w, h, lvl )
         {
             
             c.print ( "GameMode: Shakey" );
@@ -66,6 +66,8 @@ public:
             spawn();
             srand((unsigned)time(NULL));
         };
-
+    virtual std::string getMode(){
+        return "[Sh]";
+    }
 
     };

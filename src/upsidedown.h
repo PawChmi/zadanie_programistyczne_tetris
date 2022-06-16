@@ -103,4 +103,7 @@ public:
         spawn();
         spawn();
     };
+    virtual std::string getMode(){
+        return "[UD]";
+    }
 };

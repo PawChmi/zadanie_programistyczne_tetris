@@ -324,11 +324,11 @@ public:
         scr_file.close();
     }
 
-    void record ( int score, std::string name )
+    void record ( int score, std::string name, std::string mode)
     {
         if ( name.find_first_not_of ( " \n\t\v\f\r" ) == std::string::npos ) //the string is just white spaces
             name = "Player";
-        scores[-score] = name;
+        scores[-score] = name+mode;
     }
 };
 

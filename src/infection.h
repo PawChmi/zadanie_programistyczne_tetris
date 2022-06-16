@@ -70,4 +70,7 @@ public:
         spawn();
         activePiece->setShape(z);
     };
+    virtual std::string getMode(){
+        return "[I]";
+    }
 };

@@ -413,6 +413,9 @@ bool Engine::collisionCheck ( Block &b )
     }
     return false;
 }
+std::string Engine::getMode(){
+        return "[]";
+    }
 
 
 
