@@ -11,47 +11,9 @@
 #include <sstream>
 #include <exception>
 
-std::ostream& operator << ( std::ostream& o, const key& K )
-{
-    switch ( K ) {
-    case LEFT:
-        o << "left";
-        break;
-    case RIGHT:
-        o << "right";
-        break;
-    case DROP:
-        o << "drop";
-        break;
-    case HARDDROP:
-        o << "harddrop";
-        break;
-    case HOLD:
-        o << "hold";
-        break;
-    case ROT_L:
-        o << "rotate_left";
-        break;
-    case ROT_R:
-        o << "rotate_right";
-        break;
-    case PAUSE:
-        o << "pause";
-        break;
-    case REFRESH:
-        o << "pause";
-        break;
-    case QUIT:
-        o << "pause";
-        break;
-    default:
-        o << "unknown";
-    };
-    return o;
-}
-
-
-
+/**
+ * Obiekt, który wyświetla menu główne, które pozwala użytkownikowi na regulację ustawień gry, wybór wariantu gry oraz zestawu bloków.
+ */
 
 class Menu
 {
@@ -60,7 +22,7 @@ class Menu
     size_t animation_frame=0;
     const int colors[6] = {4, 2, 3, 6,  1, 5};
     std::map<int, std::string> scores;
-    const std::vector< std::vector<std::shared_ptr<Block>>> blockSets = {
+    std::vector< std::vector<std::shared_ptr<Block>>> blockSets = {
         {
             std::make_shared<block_J> ( ),
             std::make_shared<block_I> ( ),
@@ -68,47 +30,48 @@ class Menu
             std::make_shared<block_L> ( ),
             std::make_shared<block_S> ( ),
             std::make_shared<block_Z> ( ),
-            std::make_shared<block_T> ( ),  
+            std::make_shared<block_T> ( ),
         },{
-            std::make_shared<block_A> ( ),  
-            std::make_shared<block_B> ( ),  
-            std::make_shared<block_C> ( ),  
-            std::make_shared<block_D> ( ),  
-            std::make_shared<block_E> ( ),  
-            std::make_shared<block_F> ( ),  
-            std::make_shared<block_G> ( ), 
-            std::make_shared<block_H> ( ), 
-            std::make_shared<block_I> ( ), 
-            std::make_shared<block_J> ( ), 
-            std::make_shared<block_K> ( ), 
-            std::make_shared<block_L> ( ), 
-            std::make_shared<block_M> ( ), 
-            std::make_shared<block_N> ( ), 
-            std::make_shared<block_O> ( ), 
-            std::make_shared<block_P> ( ), 
-            std::make_shared<block_Q> ( ), 
-            std::make_shared<block_R> ( ), 
-            std::make_shared<block_S> ( ), 
-            std::make_shared<block_T> ( ), 
-            std::make_shared<block_U> ( ), 
-            std::make_shared<block_V> ( ), 
-            std::make_shared<block_W> ( ), 
-            std::make_shared<block_X> ( ), 
-            std::make_shared<block_Y> ( ), 
-            std::make_shared<block_Z> ( ), 
+            std::make_shared<block_A> ( ),
+            std::make_shared<block_B> ( ),
+            std::make_shared<block_C> ( ),
+            std::make_shared<block_D> ( ),
+            std::make_shared<block_E> ( ),
+            std::make_shared<block_F> ( ),
+            std::make_shared<block_G> ( ),
+            std::make_shared<block_H> ( ),
+            std::make_shared<block_I> ( ),
+            std::make_shared<block_J> ( ),
+            std::make_shared<block_K> ( ),
+            std::make_shared<block_L> ( ),
+            std::make_shared<block_M> ( ),
+            std::make_shared<block_N> ( ),
+            std::make_shared<block_O> ( ),
+            std::make_shared<block_P> ( ),
+            std::make_shared<block_Q> ( ),
+            std::make_shared<block_R> ( ),
+            std::make_shared<block_S> ( ),
+            std::make_shared<block_T> ( ),
+            std::make_shared<block_U> ( ),
+            std::make_shared<block_V> ( ),
+            std::make_shared<block_W> ( ),
+            std::make_shared<block_X> ( ),
+            std::make_shared<block_Y> ( ),
+            std::make_shared<block_Z> ( ),
         },{
-            std::make_shared<block_T> ( ),  
+            std::make_shared<block_T> ( ),
         },{
-            std::make_shared<block_dot> ( 0,0, j),
-            std::make_shared<block_dot> ( 0,0, t),
-            std::make_shared<block_dot> ( 0,0, l),
-            std::make_shared<block_dot> ( 0,0, o),
-            std::make_shared<block_dot> ( 0,0, i),
-            std::make_shared<block_dot> ( 0,0, s),
-            std::make_shared<block_dot> ( 0,0, z),
-            
+            std::make_shared<block_dot> ( 0,0, yellow),
+            std::make_shared<block_dot> ( 0,0, red),
+            std::make_shared<block_dot> ( 0,0, green),
+            std::make_shared<block_dot> ( 0,0, blue),
+            std::make_shared<block_dot> ( 0,0, cyan),
+            std::make_shared<block_dot> ( 0,0, orange),
+            std::make_shared<block_dot> ( 0,0, purple),
+
         }
     };
+
     std::vector<Font> fonts = {
         {1,"Boxy", "[]", "[]", "  ", "-", "|", "+","+", "+", "+"},
         {0,"Thin", "::", "##", "[]", "-", "|", "+","+", "+", "+"},
@@ -124,37 +87,38 @@ class Menu
         /*I*/    {5,1,4},{5,3,4},{5,4,4},{5,5,4},
         /*S*/    {8,1,5},{9,1,5},{10,1,5},{8,2,5},{8,3,5},{9,3,5},{10,3,5},{10,4,5},{8,5,5},{9,5,5},{10,5,5}
     };
-    void drawLogo(){
-        switch(gamemode){
-            case 3:
-                for ( int i = 0; i<(int)logo.size(); ++i ) {
-                    std::vector<int> l = logo[i];
-                    int a = animation_frame%20/2-2;
-                    conptr->drawTile ( l[0], l[1]+2, colors[1-(a<l[2])+(a>l[2])] );
-                }
-                break;
-            case 1:
+
+    void drawLogo() noexcept {
+        switch(gamemode) {
+        case 3:
+            for ( int i = 0; i<(int)logo.size(); ++i ) {
+                std::vector<int> l = logo[i];
+                int a = animation_frame%20/2-2;
+                conptr->drawTile ( l[0], l[1]+2, colors[1-(a<l[2])+(a>l[2])] );
+            }
+            break;
+        case 1:
             for ( int i = 0; i<(int)logo.size(); ++i ) {
                 std::vector<int> l = logo[i];
                 conptr->drawTile ( l[0], 5-l[1]+2+( l[2]+1==animation_frame%8 ), colors[l[2]] );
             }
             break;
-            case 2:
+        case 2:
             for ( int i = 0; i<(int)logo.size(); ++i ) {
                 std::vector<int> l = logo[i];
                 conptr->drawTile ( l[0]+( l[2]+1==animation_frame%8 ), l[1]+2, colors[l[2]] );
             }
-                break;
-            default:
-                for ( int i = 0; i<(int)logo.size(); ++i ) {
-                    std::vector<int> l = logo[i];
-                    conptr->drawTile ( l[0], l[1]+2-( l[2]+1==animation_frame%8 ), colors[l[2]] );
-                }
-                break;
+            break;
+        default:
+            for ( int i = 0; i<(int)logo.size(); ++i ) {
+                std::vector<int> l = logo[i];
+                conptr->drawTile ( l[0], l[1]+2-( l[2]+1==animation_frame%8 ), colors[l[2]] );
+            }
+            break;
         }
     }
-    
-    void draw()
+
+    void draw() noexcept
     {
         conptr->clear();
         conptr->setGameField(0, 10);
@@ -176,36 +140,35 @@ class Menu
         }
         std::string s((int)blockSets[block_set].size(), ' ');
         conptr->printCenter ( "Block Set: "+ s, line, ( choice== 1 ) );
-        
+
         conptr->move(conptr->getX()-(int)blockSets[block_set].size(), line++);
-        for(auto B : blockSets[block_set]){
-            conptr->print(B->getName(), (int)B->getShape());
+        for(auto B : blockSets[block_set]) {
+            conptr->print(B->getName(), (int)B->getColor());
         }
         conptr->printCenter ( "LVL:"+std::to_string ( lvl ), line++, ( choice== 2 ) );
         conptr->printCenter ( "Width:"+std::to_string ( width ), line++, ( choice== 3 ) );
         conptr->printCenter ( "Height:"+std::to_string ( height ), line++, ( choice== 4 ) );
         conptr->printCenter ( "Theme: "+fonts[theme].name, line++, ( choice== 5 ) );
-        
+
 
         conptr->printCenter ( "Controls", line++, ( choice== 6 ) );
         ++line;
-        if(choice!=6)conptr->printCenter ( "Press <HARDDROP> to start", line++, true);
-        else conptr->printCenter ( "Press <HARDDROP> to configure key binds", line++, true);
-        
+        if(choice!=6)
+            conptr->printCenter ( "Press <HARDDROP> to start", line++, true);
+        else 
+            conptr->printCenter ( "Press <HARDDROP> to configure key binds", line++, true);
+
         conptr->printCenter ( "HIGH SCORES", line++ );
         for ( auto el : scores ) {
             if ( line < conptr->getHeight() )
                 conptr->printCenter ( el.second+"\t"+std::to_string ( -el.first ), line++ );
         }
 
-
-
-
     }
-    void configureKeyBinds()
+    void configureKeyBinds() noexcept
     {
-        std::map<int, key> bindings;
-        
+        std::map<int, keyCode> bindings;
+
         bindings[conptr->prompt_key ( "     left       " )] = LEFT;
         bindings[conptr->prompt_key ( "     right      " )] = RIGHT;
         bindings[conptr->prompt_key ( "   soft drop    " )] = DROP;
@@ -217,27 +180,26 @@ class Menu
         std::ofstream kb_file ( kb_file_name );
         if ( kb_file ) {
             for ( auto k : bindings ) {
-                kb_file << (key)k.second << " "<<k.first+256*( k.first <= 5 );
+                kb_file << (keyCode)k.second << " "<<k.first+256*( k.first <= 5 );
                 kb_file<<std::endl;
-
             }
             kb_file.close();
             conptr->rebind ( kb_file_name );
-
         }
     }
 public:
-    std::shared_ptr<Engine> result()
+    std::shared_ptr<Engine> result() noexcept
     {
-        bool L1 = 1;
         conptr->setGameField ( 0, 0 );
-        while ( L1 ) {
+        while ( true ) {
             draw();
-
-            key ch = conptr -> getInput();
-            if ( ch == QUIT ) return nullptr;
-            else if ( ch == RIGHT ) choice++;
-            else if ( ch == LEFT ) choice--;
+            keyCode ch = conptr -> getInput();
+            if ( ch == QUIT ) 
+                return nullptr;
+            else if ( ch == RIGHT ) 
+                choice++;
+            else if ( ch == LEFT ) 
+                choice--;
             else if ( ch == ROT_R ) {
                 switch ( choice ) {
                 case 0:
@@ -286,7 +248,7 @@ public:
                 if ( choice==6 ) {
                     configureKeyBinds();
                 }
-                else{
+                else {
 
                     switch ( gamemode ) {
                     case 0:
@@ -302,7 +264,7 @@ public:
                         return std::make_shared<Infection> ( *conptr, blockSets[block_set], width, height, lvl );
                         break;
                     }
-                } 
+                }
 
             } else if ( ch==NONE ) {
                 animation_frame++;
@@ -310,33 +272,33 @@ public:
         }
         return nullptr;
     }
-    Menu ( Console & c, const int thm )
+    Menu ( Console & c, const int thm=0 ) noexcept
     {
         conptr = &c;
         choice = {0, 6};
 
         theme = {((thm<(int)fonts.size())?thm:0), (int)fonts.size()-1, 0};
+
         block_set = {0, (int)blockSets.size()-1, 0};
-        
         conptr->setFont(fonts[theme]);
-        
+
         lvl = {1, 100, 1};
         height = {20, 100, 10};
         width = {10, conptr->getWidth() /2-20, 6};
         gamemode = {0, 3};
         conptr->setTimeout ( 250 );
         std::ifstream scr_file ( "scores.dat" );
-        try{
-        LoadScores(scr_file);
-        }catch(...){
+        try {
+            LoadScores(scr_file);
+        } catch(...) {
             scores.clear();
             scores[1]="ERROR LOADING SCORES";
             scores[2]="Please inspect \"scores.dat\" file";
         }
 
     }
-    void LoadScores(std::ifstream &file){
-        
+    void LoadScores(std::ifstream &file) {
+
         if ( file ) {
             std::string tmp;
             while ( getline ( file, tmp ) ) {
@@ -349,20 +311,21 @@ public:
             }
         }
         file.close();
-        
+
     }
     ~Menu() noexcept
     {
         std::ofstream scr_file ( "scores.dat" );
         if ( scr_file ) {
             for ( auto el:scores ) {
-                if(el.first<=0)scr_file << -el.first << " " << el.second <<std::endl;
+                if(el.first<=0)
+                    scr_file << -el.first << " " << el.second <<std::endl;
             }
         }
         scr_file.close();
     }
 
-    void record ( int score, std::string name, std::string mode)
+    void record ( int score, std::string name, std::string mode) noexcept
     {
         if ( name.find_first_not_of ( " \n\t\v\f\r" ) == std::string::npos ) //the string is just white spaces
             name = "Player";

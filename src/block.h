@@ -3,47 +3,46 @@
 #include "tile.h"
 #include "console.h"
 
-enum blockType { //this one is just used for colors
-    n = 0,
-    l = 1,
-    j = 2,
-    s = 3,
-    z = 4,
-    t = 5,
-    i = 6,
-    o = 7
+enum blockColor { //this one is just used for colors
+    none = 0,
+    blue = 1,
+    orange = 2,
+    green = 3,
+    red = 4,
+    purple = 5,
+    cyan = 6,
+    yellow = 7
 };
+
+/**
+ * Interfejs obiektu bloku
+ */
 
 class Block
 {
-    blockType shape = n;
+    blockColor color = none;
     bool ghost = false;
 protected:
     std::string name;
     coords center= {0,0};
     std::vector<Tile> tiles;
 public:
-    Block ( int x=0, int y=0, blockType s=n ) : shape ( s ), center ( x, y ) {};
-    ~Block()
+    Block ( int x=0, int y=0, blockColor c=none ) noexcept: color ( c), center ( x, y ) {};
+    ~Block() noexcept
     {
-
     }
-    int countBlocks() const noexcept
-    {
-        return tiles.size();
-    }
-    void move ( int x, int y )
+    void move ( int x, int y ) noexcept
     {
         center.first += x;
         center.second+=y;
     }
-    void rotateLeft()
+    void rotateLeft() noexcept
     {
         for ( auto &t : tiles ) {
             t.rotL();
         }
     }
-    void rotateRight()
+    void rotateRight() noexcept
     {
         for ( auto &t : tiles ) {
             t.rotR();
@@ -52,16 +51,16 @@ public:
     void draw ( Console* disp ) const noexcept
     {
         for ( auto t : tiles ) {
-            disp->drawTile ( center.first+t.x(), center.second+t.y(), shape, ghost );
+            disp->drawTile ( center.first+t.x(), center.second+t.y(), color, ghost );
         }
     }
     void draw ( Console* disp, const int x, const int y ) const noexcept
     {
         for ( auto t : tiles ) {
-            disp->drawTile ( x+t.x(), y+t.y(), shape, ghost );
+            disp->drawTile ( x+t.x(), y+t.y(), color, ghost );
         }
     }
-    void makeGhost()
+    void makeGhost() noexcept
     {
         ghost=true;
     }
@@ -74,12 +73,12 @@ public:
 
         return output;
     }
-    void setShape(const blockType shape){
-        this->shape = shape;
+    void setColor(const blockColor c) noexcept {
+        this->color = c;
     }
-    blockType getShape() const noexcept
+    blockColor getColor() const noexcept
     {
-        return shape;
+        return color;
     }
     std::string getName() const noexcept {
         return name;

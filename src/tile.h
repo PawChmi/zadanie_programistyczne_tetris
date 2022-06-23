@@ -3,22 +3,26 @@
 
 typedef std::pair<double, double> coords;
 
+/**
+ * Obiekt "kafelka", z pojedyńczych kafelków zbudowane są bloki
+ */
+
 class Tile {
     coords Offset;
 public:
-    double x(){
+    double x()const noexcept {
         return Offset.first;
     }
-    double y(){
+    double y()const noexcept {
         return Offset.second;
     }
-    Tile(double x, double y) : Offset(x, y) {}; 
-    void rotR(){
+    Tile(double x, double y) noexcept : Offset(x, y) {};
+    void rotR() noexcept{
         double temp = -Offset.second;
         Offset.second = Offset.first;
         Offset.first = temp;
     }
-    void rotL(){
+    void rotL() noexcept{
         double temp = -Offset.first;
         Offset.first = Offset.second;
         Offset.second = temp;

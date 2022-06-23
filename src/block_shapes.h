@@ -5,7 +5,7 @@
 class block_L : public Block
 {
 public:
-    block_L ( int x =0, int y = 0, blockType sh=l ) :Block ( x,y,sh )
+    block_L ( int x =0, int y = 0, blockColor c=blue )noexcept : Block ( x,y,c )
     {
         name = "L";
         tiles= { {0, 0}, {-1, 1}, {-1,0},{1,0}};
@@ -14,7 +14,7 @@ public:
 class block_J : public Block
 {
 public:
-    block_J ( int x =0, int y = 0, blockType sh=j ) :Block ( x,y,sh )
+    block_J ( int x =0, int y = 0, blockColor c=orange ) noexcept : Block ( x,y,c )
     {
         name = "J";
         tiles= {{0, 0},{1,0},{-1,0},{1,1}};
@@ -23,7 +23,7 @@ public:
 class block_O : public Block
 {
 public:
-    block_O ( int x =0, int y = 0, blockType sh=o ) : Block ( x, y, sh )
+    block_O ( int x =0, int y = 0, blockColor c=yellow ) noexcept : Block ( x, y, c )
     {
         name = "O";
         tiles = {{-0.5,-0.5},{0.5, -0.5},{-0.5,0.5},{0.5,0.5}};
@@ -34,7 +34,7 @@ class block_S : public Block
 {
 
 public:
-    block_S ( int x =0, int y = 0, blockType sh=s )   : Block ( x,y,sh )
+    block_S ( int x =0, int y = 0, blockColor c=green )   : Block ( x,y,c )
     {
         name = "S";
         tiles= { {1,0}, {0,1},{-1,1},{0,0}};
@@ -44,7 +44,7 @@ class block_Z : public Block
 {
 
 public:
-    block_Z ( int x =0, int y = 0, blockType sh=z ) :Block ( x,y,sh )
+    block_Z ( int x =0, int y = 0, blockColor c=red ) noexcept : Block ( x,y,c )
     {
         name = "Z";
         tiles = {{0,0},{-1,0}, {0, 1},{1,1}};
@@ -54,7 +54,7 @@ public:
 class block_I : public Block
 {
 public:
-    block_I ( int x =0, int y = 0, blockType sh=i ) :Block ( x,y,sh )
+    block_I ( int x =0, int y = 0, blockColor c=cyan ) noexcept : Block ( x,y,c )
     {
 
         name = "I";
@@ -66,7 +66,7 @@ public:
 class block_T : public Block
 {
 public:
-    block_T ( int x =0, int y = 0, blockType sh=t ) :Block ( x,y,sh )
+    block_T ( int x =0, int y = 0, blockColor c=purple ) noexcept : Block ( x,y,c )
     {
         name = "T";
         tiles = { {0,0}, {1,0}, {-1,0},{0,1}};
@@ -78,23 +78,14 @@ class block_dot : public Block
 {
 
 public:
-    block_dot ( int x =0, int y = 0, blockType sh=j ) :Block ( x,y,sh )
+    block_dot ( int x =0, int y = 0, blockColor c=none ) noexcept : Block ( x,y,c )
     {
         name = ".";
         tiles = {{1,0}};
     };
 };
 
-class block_slash : public Block
-{
-public:
-    block_slash ( int x =0, int y = 0, blockType sh=t ) :Block ( x,y,sh )
-    {
-        name = "/";
-        tiles = { {0.5,0.5}, {-0.5,-0.5}, {-1.5,-1.5},{1.5,1.5}};
-        center = {x+0.5, y+0.5};
-    };
-};
+
 
 
 

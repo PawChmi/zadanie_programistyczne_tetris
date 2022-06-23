@@ -1,29 +1,7 @@
 #include "console.h"
 #include <curses.h>
 
-
-std::istream& operator >> (std::istream& i, key& K) 
-{
-    K = UNKNOWN;
-    std::string S;
-    if(i >> S) 
-    {
-        if(S=="right")K = RIGHT;
-        else if(S=="left")K = LEFT;
-        else if(S=="drop")K = DROP;
-        else if(S=="harddrop")K = HARDDROP;
-        else if(S=="hold")K = HOLD;
-        else if(S=="rotate_left")K = ROT_L;
-        else if(S=="rotate_right")K = ROT_R;
-        else if(S=="quit")K = QUIT;
-        else if(S=="pause")K = PAUSE;
-        else if(S=="refresh")K = REFRESH;
-
-    }
-    return i;
-}
-
-Console::Console(const std::string& keybind_filename)
+Console::Console(const std::string& keybind_filename) noexcept
 {
     ::setlocale(LC_ALL, "");
     ::initscr();
@@ -31,9 +9,8 @@ Console::Console(const std::string& keybind_filename)
     ::cbreak();
     ::keypad(stdscr, true);
     ::curs_set(0);
-    if(!has_colors()) {
+    if(!has_colors()) 
         ::endwin();
-    }
     resize();
     clear();
     ::start_color();
@@ -49,9 +26,7 @@ Console::Console(const std::string& keybind_filename)
     ::endwin();
 }
 
-
-
-void Console::rebind(const std::string& keybind_filename) 
+void Console::rebind(const std::string& keybind_filename) noexcept
 {
     bindings.clear();
     bindings = {//default keybinds
@@ -69,18 +44,18 @@ void Console::rebind(const std::string& keybind_filename)
     };
     std::ifstream file (keybind_filename);
     if(file) {
-        key K;
+        keyCode K;
         int N;
 
         while(file >> K>>N) {
-            bindings[N] = K;   
+            bindings[N] = K;
         }
     }
 }
 /**
  * Destruktor konsoli
  */
-Console::~Console()
+Console::~Console() noexcept
 {
     ::endwin();
 }
@@ -90,7 +65,7 @@ Console::~Console()
  * @param w szerokość pola gry
  * @param h wysokość pola gry
  */
-void Console::setGameField(const int w, const int h)
+void Console::setGameField(const int w, const int h) noexcept
 {
     gameFieldWidth = w;
     gameFieldHeight = h;
@@ -99,12 +74,12 @@ void Console::setGameField(const int w, const int h)
 /**
  * Funkcja czyści wyświetlany ekran
  */
-void Console::clear()
+void Console::clear() const noexcept
 {
     ::clear();
 }
 
-void Console::clear(int x, int y, int w, int h)
+void Console::clear(int x, int y, int w, int h) noexcept
 {
     attron(COLOR_PAIR(7));
     for(int i = 0; i < h; i++) {
@@ -114,8 +89,7 @@ void Console::clear(int x, int y, int w, int h)
     }
 }
 
-
-void Console::clear_abs(int x, int y, int w, int h)
+void Console::clear_abs(int x, int y, int w, int h) noexcept
 {
     attron(COLOR_PAIR(7));
     for(int i = 0; i < h; i++) {
@@ -125,31 +99,29 @@ void Console::clear_abs(int x, int y, int w, int h)
     }
 }
 
-
-void Console::move(int x, int y)
+void Console::move(const int x, const int y) noexcept
 {
     ::move(y+offsetY, x+offsetX);
 }
 
-int Console::getX(){
+int Console::getX() const noexcept {
     int x, y;
     getyx(stdscr, y, x);
     return x;
 }
-void Console::print(const std::string& s)
+void Console::print(const std::string& s) noexcept
 {
 
     printw(s.c_str());
 }
-void Console::print(const std::string& s, const short int c)
+void Console::print(const std::string& s, const short int c) noexcept
 {
     attron(COLOR_PAIR(c));
     printw(s.c_str());
     attroff(COLOR_PAIR(c));
 }
 
-
-void Console::printCenter(std::string s, int y,  bool h)
+void Console::printCenter(std::string s, int y,  bool h) noexcept
 {
     attron(COLOR_PAIR(7));
     move((int)(Console::width/2)-(s.length()/2), y);
@@ -160,8 +132,7 @@ void Console::printCenter(std::string s, int y,  bool h)
     }
 }
 
-
-void Console::print_highlight(std::string& s)
+void Console::print_highlight(std::string& s) noexcept
 {
     attron(A_REVERSE);
     print(s);
@@ -171,10 +142,9 @@ void Console::print_highlight(std::string& s)
 /**
  * Funkcja sprawdza wymiary wyświetlacza i zapisuje je do zmiennych width i height obiektu
  */
-void Console::resize()
+void Console::resize() noexcept
 {
     getmaxyx(stdscr, height, width);
-//     offsetX = -width/4;
 }
 
 /**
@@ -182,12 +152,12 @@ void Console::resize()
  * @param delay czas w milisekundach
  */
 
-void Console::setTimeout(const int delay)
+void Console::setTimeout(const int delay) noexcept
 {
     ::timeout(delay);
 }
 
-void Console::wait() const 
+void Console::wait() const  noexcept
 {
     while(getch()>0) {}
     return;
@@ -197,7 +167,7 @@ void Console::wait() const
  * Funkcja zwraca klawisz wciśnięty przez użytkownika
  * @return wartość ascii znaku z klawiatury. -1 gdy minął czas oczekiwania.
  */
-key Console::getInput() 
+keyCode Console::getInput() noexcept
 {
     return bindings[getch()];
 }
@@ -207,7 +177,7 @@ key Console::getInput()
  * @param y współrzędna y w polu gry
  * @param color wartość od 1-7 oznaczająca kolor kafelka
  */
-void Console::drawTile(int x, int y, int color, bool ghost)
+void Console::drawTile(int x, int y, int color, bool ghost) noexcept
 {
     if(y>0 and y<gameFieldHeight) {
         attron(COLOR_PAIR(color));
@@ -220,7 +190,7 @@ void Console::drawTile(int x, int y, int color, bool ghost)
     }
 }
 
-std::string centrify(std::string& str, int &w) 
+std::string centrify(std::string& str, int &w) noexcept
 {
     int rem = w-str.length();
     std::string out;
@@ -234,12 +204,12 @@ std::string centrify(std::string& str, int &w)
     return out;
 }
 
-int Console::prompt_key(std::string question)
+int Console::prompt_key(std::string question) noexcept
 {
     return (int) prompt(question, 1)[0];
 }
 
-std::string Console::prompt(std::string question, int limit)
+std::string Console::prompt(std::string question, int limit) noexcept
 {
     attron(COLOR_PAIR(7));
     std::string out;
@@ -288,19 +258,13 @@ std::string Console::prompt(std::string question, int limit)
                 } else if((int)out.length()<limit) {
                     out+=(char)q;
                 }
-
                 move(corX+1, corY+4);
                 print(centrify(out, w));
-
-
-
             }
         }
     }
     return out;
 }
-
-
 
 /**
  * Funkcja rysuje prostokąt pustej przestrzeni na podanych współrzędnych o podanych wymiarach
@@ -309,7 +273,7 @@ std::string Console::prompt(std::string question, int limit)
  * @param w szerokość prostokąta
  * @param h wysokość prostokąta
  */
-void Console::drawEmpty(int x, int y, int w, int h)
+void Console::drawEmpty(int x, int y, int w, int h) noexcept
 {
     attron(COLOR_PAIR(7));
     for(int i = 0; i < h; i++) {
@@ -327,7 +291,7 @@ void Console::drawEmpty(int x, int y, int w, int h)
  * @param goal Ile jeszcze brakuje do następnego poziomu
  */
 
-void Console::printData(const int scr,const int lvl,const int goal)
+void Console::printData(const int scr,const int lvl,const int goal) noexcept
 {
     clear(gameFieldWidth, 1, 7, gameFieldHeight);
     attron(COLOR_PAIR(7));

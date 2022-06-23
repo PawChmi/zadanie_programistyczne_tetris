@@ -14,10 +14,13 @@
 
 
 
-
+/**
+ * Interfejs silnika gry. Odpowiada za kontrolowanie przebiegu rozgrywki, interpretuje wejście konsoli i 
+ */
 class Engine
 {
 protected:
+    std::string mode = "default";
     int height;
     int width;
     bool end = false;
@@ -26,52 +29,53 @@ protected:
     int clock=0;
     int goal = 0;
     std::vector<std::shared_ptr<Block>> blockSet;
-    std::queue<std::shared_ptr<Block>> blockQ;
+    std::queue<std::shared_ptr<Block>> blockQueue;
     bool fallenUpdate=false;
     bool held=false;
     int ** field;
-    std::shared_ptr<Block> activePiece;
+    std::shared_ptr<Block> activePiece=nullptr;
     std::shared_ptr<Block>  nextPiece=nullptr;
-    std::shared_ptr<Block> ghostPiece;
+    std::shared_ptr<Block> ghostPiece=nullptr;
     std::shared_ptr<Block>  holdPiece=nullptr;
     Console * ConsolePointer;
-    int scanLine ( int y );
-    virtual bool collisionCheck ( Block &b );
-    virtual void petrify();
-    virtual void clearLine ( int y );
-    void scanLines();
-    void shuffle();
-    void scoreIncrease ( int n );
-    void clearField();
-    void setField ( const int x, const int y, const int val );
-    virtual void gravity();
-    virtual void ghostDrop();
-    void drawField();
-    virtual void spawn();
-    void Left();
-    void Right();
-    void incrementClock ( int ammount=DEFAULT_TIME_ADDED );
-    virtual void SoftDrop();
-    virtual void HardDrop();
-    void RotateL();
-    void RotateR();
-    void Hold();
-    void drawPiece();
-    void drawSide();
-    bool fallen();
-    void GiveUp()
+    int scanLine ( int y ) noexcept;
+    virtual bool collisionCheck ( Block &b ) noexcept;
+    virtual void petrify() noexcept;
+    virtual void clearLine ( int y ) noexcept;
+    void scanLines() noexcept;
+    void shuffle() noexcept;
+    void scoreIncrease ( const int n ) noexcept;
+    void clearField() noexcept;
+    virtual void gravity() noexcept;
+    virtual void ghostDrop() noexcept;
+    void drawField() noexcept;
+    virtual void spawn() noexcept;
+    void Left() noexcept;
+    void Right() noexcept;
+    void incrementClock ( int ammount=DEFAULT_TIME_ADDED ) noexcept;
+    virtual void SoftDrop() noexcept;
+    virtual void HardDrop() noexcept;
+    void RotateL() noexcept;
+    void RotateR() noexcept;
+    void Hold() noexcept;
+    void drawPiece() noexcept;
+    void drawSide() noexcept;
+    bool fallen() noexcept;
+    void GiveUp() noexcept
     {
         end = true;
     }
 public:
-    bool work();
-    virtual std::string getMode();
+    bool step() noexcept;
+    std::string getMode() const noexcept{
+        return mode;
+    }
     int getScore() const noexcept
     {
         return score;
     }
-    Engine ( Console & c,  std::vector<std::shared_ptr<Block>> &blockSet, int w=10, int h=20, int lvl = 1 );
-    virtual ~Engine();
+    Engine ( Console & c,  std::vector<std::shared_ptr<Block>> blockSet, int w=10, int h=20, int lvl = 1 ) noexcept;
+    virtual ~Engine() noexcept; 
 
 };
 
